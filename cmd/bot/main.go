@@ -1,17 +1,24 @@
-package bot
+package main
 
 import (
 	"context"
 	"fmt"
+
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/cmd/bot/app"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/cmd/bot/infrastructure"
 )
 
 func main() {
 	ctx := context.Background()
 
-	adapter := NewTgAdapter()
-	updates := adapter.bot.GetUpdatesChan(adapter.updateConfig)
+	err := app.LoadEnv()
+	if err != nil {
+		fmt.Printf("Load env err: %v", err)
+	}
+	adapter := infrastructure.NewTgAdapter()
+	updates := adapter.Bot.GetUpdatesChan(adapter.UpdateConfig)
 
-	dispatcher := NewDispatcher()
+	dispatcher := app.BuildDispatcher()
 
 	for update := range updates {
 		if update.Message == nil {
