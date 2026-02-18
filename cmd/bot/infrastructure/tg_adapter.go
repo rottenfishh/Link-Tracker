@@ -30,7 +30,8 @@ func SetUpTgCommands(bot *tgbotapi.BotAPI) {
 	cmds := []tgbotapi.BotCommand{{
 		Command:     "start",
 		Description: "start the bot to use our cool features"},
-		{Command: "help",
+		{
+			Command:     "help",
 			Description: "show bot's available commands"},
 	}
 	cfg := tgbotapi.NewSetMyCommands(cmds...)

@@ -39,7 +39,10 @@ func (r *Dispatcher) Dispatch(ctx *context.Context, command string) (*commands.M
 	if len(args) < 1 {
 		return nil, fmt.Errorf("empty command")
 	}
-	cmd, _ := r.cmds[args[0]]
+	cmd, ok := r.cmds[args[0]]
+	if !ok {
+		cmd = r.cmds["/fallback"]
+	}
 	msg, err := cmd.Execute(ctx, args[1:])
 	if err != nil {
 		return nil, err

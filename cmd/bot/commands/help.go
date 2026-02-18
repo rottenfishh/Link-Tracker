@@ -16,6 +16,6 @@ func (cmd *HelpCommand) Description() string {
 
 func (cmd *HelpCommand) Execute(ctx *context.Context, args []string) (*Message, error) {
 	return NewMessage("Доступные в боте команды:\n" +
-		"\\start - начать работу\n" +
-		"\\help - справка по боту"), nil
+		"/start - начать работу\n" +
+		"/help - справка по боту"), nil
 }
