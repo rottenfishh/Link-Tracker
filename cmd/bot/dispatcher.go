@@ -6,31 +6,31 @@ import (
 	"strings"
 )
 
-type Registry struct {
+type Dispatcher struct {
 	cmds map[string]Command
 }
 
-func NewRegistry() *Registry {
-	return &Registry{cmds: make(map[string]Command)}
+func NewDispatcher() *Dispatcher {
+	return &Dispatcher{cmds: make(map[string]Command)}
 }
 
-func (r *Registry) Register(cmd Command) {
+func (r *Dispatcher) Register(cmd Command) {
 	r.cmds[cmd.Name()] = cmd
 }
 
-func (r *Registry) Delete(name string) {
+func (r *Dispatcher) Delete(name string) {
 	r.cmds[name] = nil
 }
 
-func (r *Registry) Get(name string) Command {
+func (r *Dispatcher) Get(name string) Command {
 	return r.cmds[name]
 }
 
-func (r *Registry) GetCommands() map[string]Command {
+func (r *Dispatcher) GetCommands() map[string]Command {
 	return r.cmds
 }
 
-func (r *Registry) Dispatch(ctx *context.Context, command string) (*Message, error) {
+func (r *Dispatcher) Dispatch(ctx *context.Context, command string) (*Message, error) {
 	args := strings.Split(command, " ")
 	if len(args) < 1 {
 		return nil, fmt.Errorf("empty command")
