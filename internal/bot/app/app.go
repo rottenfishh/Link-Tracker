@@ -2,7 +2,7 @@ package app
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/commands"
@@ -15,13 +15,17 @@ type App struct {
 }
 
 func NewApp() *App {
-	err := LoadEnv()
+	InitLogging()
 
+	err := LoadEnv()
 	if err != nil {
-		fmt.Printf("Load env err: %v", err)
+		slog.Error("Error loading env", "error", err)
 	}
+
 	d := buildDispatcher()
 	a := infrastructure2.NewTgAdapter()
+
+	slog.Info("Finished setting up service")
 	return &App{d, a}
 }
 
@@ -40,20 +44,24 @@ func buildDispatcher() *application.Dispatcher {
 }
 
 func (a *App) RunService(ctx *context.Context) {
+	slog.Info("Starting service. Accepting user messages")
+
 	updates := a.adapter.Bot.GetUpdatesChan(a.adapter.UpdateConfig)
 
 	for update := range updates {
 		if update.Message == nil {
 			continue
 		}
+
 		serverResponse, err := a.dispatcher.Dispatch(ctx, update.Message.Text)
 		if err != nil {
-			fmt.Println(err)
+
+			slog.Error("Dispatching error", "err", err)
 		}
 
 		err = a.adapter.SendMessage(update, serverResponse)
 		if err != nil {
-			fmt.Println(err)
+			slog.Error("TG API sending message error", "err", err)
 		}
 	}
 }

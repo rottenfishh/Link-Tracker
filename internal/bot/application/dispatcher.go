@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/commands"
@@ -39,8 +40,12 @@ func (r *Dispatcher) Dispatch(ctx *context.Context, command string) (*commands.M
 	if len(args) < 1 {
 		return nil, fmt.Errorf("empty command")
 	}
+
+	slog.Debug("Dispatching command", "command: ", command)
+
 	cmd, ok := r.cmds[args[0]]
 	if !ok {
+		slog.Debug("Command not found. Fallback", "command: ", command)
 		cmd = r.cmds["/fallback"]
 	}
 	msg, err := cmd.Execute(ctx, args[1:])

@@ -1,7 +1,7 @@
 package infrastructure
 
 import (
-	"fmt"
+	"log/slog"
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -14,10 +14,13 @@ type TgAdapter struct {
 }
 
 func NewTgAdapter() *TgAdapter {
+	slog.Info("Initializing TgAdapter")
+
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TG_API_TOKEN"))
 	if err != nil {
-		fmt.Printf("Env: %v", err)
+		slog.Error("Error setting up API bot", "error", err)
 	}
+
 	bot.Debug = true
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 30
@@ -37,7 +40,7 @@ func SetUpTgCommands(bot *tgbotapi.BotAPI) {
 	cfg := tgbotapi.NewSetMyCommands(cmds...)
 	_, err := bot.Request(cfg)
 	if err != nil {
-		fmt.Println(err)
+		slog.Error("Error while setting up tg commands", "error", err)
 	}
 }
 
