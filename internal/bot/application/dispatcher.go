@@ -1,11 +1,11 @@
-package infrastructure
+package application
 
 import (
 	"context"
 	"fmt"
 	"strings"
 
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/cmd/bot/application/commands"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/commands"
 )
 
 type Dispatcher struct {
