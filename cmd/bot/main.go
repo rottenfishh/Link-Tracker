@@ -10,6 +10,5 @@ func main() {
 	ctx := context.Background()
 
 	appBot := app.NewApp()
-
 	appBot.RunService(&ctx)
 }

@@ -22,14 +22,14 @@ func NewApp() *App {
 		slog.Error("Error loading env", "error", err)
 	}
 
-	d := buildDispatcher()
+	d := BuildDispatcher()
 	a := infrastructure2.NewTgAdapter()
 
 	slog.Info("Finished setting up service")
 	return &App{d, a}
 }
 
-func buildDispatcher() *application.Dispatcher {
+func BuildDispatcher() *application.Dispatcher {
 	help := &commands.HelpCommand{}
 	start := &commands.StartCommand{}
 	fallback := &commands.FallBackCommand{}

@@ -15,5 +15,5 @@ func (cmd *StartCommand) Description() string {
 }
 
 func (cmd *StartCommand) Execute(ctx *context.Context, args []string) (*Message, error) {
-	return NewMessage("Добро пожаловать, путник"), nil
+	return NewMessage("Добро пожаловать, путник. Введите /help для просмотра доступных команд."), nil
 }
