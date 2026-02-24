@@ -6,12 +6,12 @@ import (
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/commands"
-	infrastructure2 "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure"
 )
 
 type App struct {
 	dispatcher *application.Dispatcher
-	adapter    *infrastructure2.TgAdapter
+	adapter    *infrastructure.TgAdapter
 }
 
 func NewApp() *App {
@@ -23,7 +23,7 @@ func NewApp() *App {
 	}
 
 	d := BuildDispatcher()
-	a := infrastructure2.NewTgAdapter()
+	a := infrastructure.NewTgAdapter()
 
 	slog.Info("Finished setting up service")
 	return &App{d, a}
