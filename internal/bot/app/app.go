@@ -17,13 +17,12 @@ type App struct {
 func NewApp() *App {
 	InitLogging()
 
-	err := LoadEnv()
+	cfg, err := LoadConfig()
 	if err != nil {
-		slog.Error("Error loading env", "error", err)
+		slog.Error("Error loading config ", "error: ", err)
 	}
-
 	d := BuildDispatcher()
-	a := infrastructure.NewTgAdapter()
+	a := infrastructure.NewTgAdapter(cfg.Telegram.Token, cfg.Telegram.Debug)
 
 	slog.Info("Finished setting up service")
 	return &App{d, a}
@@ -33,7 +32,11 @@ func BuildDispatcher() *application.Dispatcher {
 	help := &commands.HelpCommand{}
 	start := &commands.StartCommand{}
 	fallback := &commands.FallBackCommand{}
-	cmds := []commands.Command{help, start, fallback}
+	track := &commands.TrackCommand{}
+	untrack := &commands.UntrackCommand{}
+	list := &commands.ListCommand{}
+
+	cmds := []commands.Command{help, start, fallback, track, untrack, list}
 
 	d := application.NewDispatcher()
 	for _, cmd := range cmds {

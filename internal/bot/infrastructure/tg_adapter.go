@@ -2,7 +2,6 @@ package infrastructure
 
 import (
 	"log/slog"
-	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/commands"
@@ -13,15 +12,15 @@ type TgAdapter struct {
 	UpdateConfig tgbotapi.UpdateConfig
 }
 
-func NewTgAdapter() *TgAdapter {
+func NewTgAdapter(key string, debug bool) *TgAdapter {
 	slog.Info("Initializing TgAdapter")
 
-	bot, err := tgbotapi.NewBotAPI(os.Getenv("TG_API_TOKEN"))
+	bot, err := tgbotapi.NewBotAPI(key)
 	if err != nil {
 		slog.Error("Error setting up API bot", "error", err)
 	}
 
-	bot.Debug = true
+	bot.Debug = debug
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 30
 	SetUpTgCommands(bot)
@@ -29,13 +28,14 @@ func NewTgAdapter() *TgAdapter {
 	return &TgAdapter{Bot: bot, UpdateConfig: updateConfig}
 }
 
+// TODO: use command structs to extract this info?
 func SetUpTgCommands(bot *tgbotapi.BotAPI) {
 	cmds := []tgbotapi.BotCommand{{
-		Command:     "start",
-		Description: "start the bot to use our cool features"},
-		{
-			Command:     "help",
-			Description: "show bot's available commands"},
+		Command: "start", Description: "start the bot to use our cool features"},
+		{Command: "help", Description: "show bot's available commands"},
+		{Command: "track", Description: "track given link"},
+		{Command: "untrack", Description: "untrack given link"},
+		{Command: "list", Description: "get list of tracked links"},
 	}
 	cfg := tgbotapi.NewSetMyCommands(cmds...)
 	_, err := bot.Request(cfg)

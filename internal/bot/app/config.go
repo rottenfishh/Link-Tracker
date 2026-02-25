@@ -1,11 +1,23 @@
 package app
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 
+	"github.com/byrnedo/typesafe-config/parse"
 	"github.com/joho/godotenv"
 )
+
+type TelegramConfig struct {
+	Token string `config:"token"`
+	Debug bool   `config:"debug,default=false"`
+}
+
+type AppConfig struct {
+	Telegram TelegramConfig `config:"telegram"`
+	Port     int            `config:"port,default=8080"`
+}
 
 func LoadEnv() error {
 	err := godotenv.Load(".env")
@@ -18,4 +30,23 @@ func LoadEnv() error {
 func InitLogging() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
+}
+
+func LoadConfig() (*AppConfig, error) {
+	err := LoadEnv()
+	if err != nil {
+		return nil, fmt.Errorf("error loading env: %v", err)
+	}
+
+	cfg := &AppConfig{}
+	tree, err := parse.ParseFile("./app.conf")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read /app.conf:" + err.Error())
+	}
+
+	parse.Populate(cfg, tree.GetConfig(), "root")
+
+	tgToken := os.Getenv("TG_API_TOKEN")
+	cfg.Telegram.Token = tgToken
+	return cfg, nil
 }
