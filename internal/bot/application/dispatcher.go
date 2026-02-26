@@ -36,6 +36,7 @@ func (r *Dispatcher) GetCommands() map[string]commands.Command {
 
 // TODO: use tg-bot-api built-in parser of commands
 func (r *Dispatcher) Dispatch(ctx *context.Context, command string) (*commands.Message, error) {
+	slog.Info(command)
 	args := strings.Split(command, " ")
 	if len(args) < 1 {
 		return nil, fmt.Errorf("empty command")

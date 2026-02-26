@@ -13,6 +13,7 @@ func (cmd *TrackCommand) Description() string {
 	return "Command to start tracking events from a given link"
 }
 
+// TODO: check for no args
 func (cmd *TrackCommand) Execute(ctx *context.Context, args []string) (*Message, error) {
 	// call Scrapper.RegisterLink
 	// check ifs not already tracked
