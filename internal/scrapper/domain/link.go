@@ -1,7 +1,9 @@
 package domain
 
 type Link struct {
-	Link   string   `json:"link"`
-	Tags   []string `json:"tags"`
-	Events []string `json:"events"`
+	Link         string   `json:"link"`
+	Etag         string   `json:"etag,omitempty"`
+	LastModified string   `json:"last_modified"`
+	Tags         []string `json:"tags"`
+	Events       []string `json:"events"`
 }
