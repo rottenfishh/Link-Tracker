@@ -40,8 +40,6 @@ func (c *GithubClient) GetUpdates(link string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Get("Last-Modified")
-	// if link.LastModified < req { update it and users}
 	req.Header.Add("Authorization", "token "+c.token)
 
 	result, err := c.client.Do(req)
@@ -49,5 +47,7 @@ func (c *GithubClient) GetUpdates(link string) (*http.Response, error) {
 		return nil, err
 	}
 	fmt.Println(result)
+	req.Header.Get("Last-Modified")
+	// if link.LastModified < req { update it and users}
 	return result, nil
 }

@@ -7,6 +7,7 @@ import (
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain"
 )
 
+// updates
 func UpdateFromLink(c *gin.Context) {
 	var update domain.LinkUpdate
 	if err := c.BindJSON(&update); err != nil {

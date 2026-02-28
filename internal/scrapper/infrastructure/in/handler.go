@@ -1,7 +1,8 @@
-package adapter
+package in
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/domain"
@@ -12,7 +13,11 @@ func RegisterChat(c *gin.Context) {
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "id is required"})
 	}
-	chat := domain.NewChat(id)
+	idInt, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "id is required"})
+	}
+	chat := domain.NewChat(idInt)
 	//repo.save(chat)
 
 	c.IndentedJSON(http.StatusOK, chat)

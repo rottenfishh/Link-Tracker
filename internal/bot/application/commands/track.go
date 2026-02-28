@@ -14,6 +14,8 @@ func (cmd *TrackCommand) Description() string {
 }
 
 // TODO: check for no args
+// get link. after that adapter sets flag for start of state machine(int ctx, for example)
+// . if flag is set, accept args as tags. /cancel is processed in adapter, and sent to this cmmand to. if its sent, we save stuff
 func (cmd *TrackCommand) Execute(ctx *context.Context, args []string) (*Message, error) {
 	// call Scrapper.RegisterLink
 	// check ifs not already tracked
