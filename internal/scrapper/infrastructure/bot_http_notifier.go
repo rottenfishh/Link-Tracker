@@ -14,6 +14,10 @@ type BotHttpNotifier struct {
 	url    string
 }
 
+func NewBotHttpNotifier(url string) *BotHttpNotifier {
+	return &BotHttpNotifier{http.DefaultClient, url}
+}
+
 // TODO: return response
 func (n *BotHttpNotifier) SendUpdate(update domain.LinkUpdate) error {
 	body, err := json.Marshal(update)

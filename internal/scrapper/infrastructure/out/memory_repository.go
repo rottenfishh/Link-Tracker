@@ -1,15 +1,18 @@
 package out
 
 import (
-	domain2 "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
 )
 
 type InMemoryRepo struct {
-	Chats       map[int64]*domain2.Chat
+	Chats       map[int64]*domain.Chat
 	Subscribers map[string][]int64
 }
 
-func (r *InMemoryRepo) SaveChat(chat *domain2.Chat) error {
+func NewInMemoryRepo() *InMemoryRepo {
+	return &InMemoryRepo{make(map[int64]*domain.Chat), make(map[string][]int64)}
+}
+func (r *InMemoryRepo) SaveChat(chat *domain.Chat) error {
 	r.Chats[chat.Id] = chat
 	return nil
 }
@@ -19,12 +22,20 @@ func (r *InMemoryRepo) DeleteChat(chatId int64) error {
 	return nil
 }
 
-func (r *InMemoryRepo) GetLinksById(chatId int64) ([]domain2.Link, error) {
+func (r *InMemoryRepo) GetChats() ([]domain.Chat, error) {
+	chats := make([]domain.Chat, 0, len(r.Chats))
+	for _, chat := range r.Chats {
+		chats = append(chats, *chat)
+	}
+	return chats, nil
+}
+
+func (r *InMemoryRepo) GetLinksById(chatId int64) ([]domain.Link, error) {
 	links := r.Chats[chatId].Links
 	return links, nil
 }
 
-func (r *InMemoryRepo) AddLink(chatId int64, link domain2.Link) (domain2.Link, error) {
+func (r *InMemoryRepo) AddLink(chatId int64, link domain.Link) (domain.Link, error) {
 	r.Chats[chatId].Links = append(r.Chats[chatId].Links, link)
 
 	r.Subscribers[link.Link] = append(r.Subscribers[link.Link], chatId)

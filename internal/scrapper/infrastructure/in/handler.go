@@ -14,6 +14,10 @@ type HttpHandler struct {
 	repo out.ChatRepository
 }
 
+func NewHttpHandler(repo out.ChatRepository) *HttpHandler {
+	return &HttpHandler{repo}
+}
+
 func (h *HttpHandler) RegisterChat(c *gin.Context) {
 	id := c.Param("id")
 
@@ -22,7 +26,7 @@ func (h *HttpHandler) RegisterChat(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 	}
 	chat := domain2.NewChat(idInt)
-	err = h.repo.SaveChat(*chat)
+	err = h.repo.SaveChat(chat)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 	}

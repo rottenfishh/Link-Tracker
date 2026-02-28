@@ -20,6 +20,7 @@ func NewApp() *App {
 	cfg, err := LoadConfig()
 	if err != nil {
 		slog.Error("Error loading config ", "error: ", err)
+		return nil
 	}
 	d := BuildDispatcher()
 	a := infrastructure.NewTgAdapter(cfg.Telegram.Token, cfg.Telegram.Debug)

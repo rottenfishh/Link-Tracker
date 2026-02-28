@@ -12,11 +12,15 @@ import (
 )
 
 // https://api.stackexchange.com/2.3/questions/54632086?order=desc&sort=activity&site=stackoverflow example
+// TODO: get token and finish this
 type StackOverflowClient struct {
-	client http.Client
+	client *http.Client
 	token  string
 }
 
+func NewStackOverflowClient(token string) *StackOverflowClient {
+	return &StackOverflowClient{http.DefaultClient, token}
+}
 func (c *StackOverflowClient) FormatLink(link string) string {
 	return fmt.Sprintf("https://www.stackoverflow.com/questions/%d/%s", os.Getpid(), link)
 }

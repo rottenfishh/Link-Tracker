@@ -2,6 +2,7 @@ package application
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -11,27 +12,43 @@ import (
 )
 
 // TODO: fix this. interface for updaters
+// have type of link on link and type of notifier. go over links and call needed notifier from map
+// map [site domain] = notifier
 type Scheduler struct {
 	gocron.Scheduler
-	notifier     infrastructure.Notifier
-	repo         out.InMemoryRepo
-	githubClient *GithubClient
-	stackClient  *StackOverflowClient
+	repo     out.ChatRepository
+	notifier infrastructure.Notifier
+	updaters map[string]LinkUpdater
 }
 
-func NewScheduler(githubClient *GithubClient, stackClient *StackOverflowClient, notifier infrastructure.Notifier) (*Scheduler, error) {
+func NewScheduler(notifier infrastructure.Notifier, repo out.ChatRepository) (*Scheduler, error) {
 	s, err := gocron.NewScheduler()
 	if err != nil {
 		return nil, err
 	}
-	repo := out.InMemoryRepo{make(map[int64]*domain.Chat), make(map[string][]int64)}
-	return &Scheduler{s, notifier, repo, githubClient, stackClient}, nil
+
+	updaters := make(map[string]LinkUpdater)
+
+	//repo := out.InMemoryRepo{make(map[int64]*domain.Chat), make(map[string][]int64)}
+	return &Scheduler{s, repo, notifier, updaters}, nil
+}
+
+func (s *Scheduler) RegisterUpdater(name string, updater LinkUpdater) {
+	s.updaters[name] = updater
+}
+
+func (s *Scheduler) GetUpdater(name string) LinkUpdater {
+	return s.updaters[name]
 }
 
 // TODO: нужно идти по линкам, а не по чатам, и уведомлять всех, кто подписан на линк.
 func (s *Scheduler) updateUsers() error {
-	for _, chat := range s.repo.Chats {
-		err := s.updateLinks(chat)
+	chats, err := s.repo.GetChats()
+	if err != nil {
+		return err
+	}
+	for _, chat := range chats {
+		err = s.updateLinks(chat)
 		if err != nil {
 			return err
 		}
@@ -39,17 +56,23 @@ func (s *Scheduler) updateUsers() error {
 	return nil
 }
 
-func (s *Scheduler) updateLinks(chat *domain.Chat) error {
+func (s *Scheduler) updateLinks(chat domain.Chat) error {
 	for _, link := range chat.Links {
-		update, err := s.githubClient.GetUpdates(link.Link)
+		tracker := s.updaters[link.Domain]
+		if tracker == nil {
+			slog.Error("No link tracker for this url found: ", "url", link)
+			continue
+		}
+
+		update, err := tracker.GetUpdates(link.Link)
 		if err != nil {
 			return err
 		}
 
 		if update.LastModified.After(link.LastModified) {
 			chats := []int64{chat.Id}
-			upd := domain.LinkUpdate{1, link.Link, "New event from given link", chats}
-			err = s.notifier.SendUpdate(upd)
+			upd := domain.NewLinkUpdate(1, link.Link, "New event from given link", chats)
+			err = s.notifier.SendUpdate(*upd)
 			if err != nil {
 				return err
 			}
