@@ -5,6 +5,9 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
+
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/domain"
 )
 
 type GithubClient struct {
@@ -25,7 +28,7 @@ func NewGithubClient(token string) *GithubClient {
 //https://github.com/golang/go
 //https://api.github.com/repos/golang/go
 
-func ParseLink(link string) string {
+func (c *GithubClient) FormatLink(link string) string {
 	parts := strings.Split(link, "/")
 	parts = parts[:2]
 	newLink := "https://api.github.com/repos/" + strings.Join(parts, "/")
@@ -33,9 +36,9 @@ func ParseLink(link string) string {
 	return newLink
 }
 
-func (c *GithubClient) GetUpdates(link string) (*http.Response, error) {
+func (c *GithubClient) GetUpdates(link string) (*domain.Update, error) {
 	//repo.getLink(link)
-	newLink := ParseLink(link)
+	newLink := c.FormatLink(link)
 	req, err := http.NewRequest("GET", newLink, nil)
 	if err != nil {
 		return nil, err
@@ -46,8 +49,24 @@ func (c *GithubClient) GetUpdates(link string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(result)
-	req.Header.Get("Last-Modified")
-	// if link.LastModified < req { update it and users}
-	return result, nil
+	timeModified, err := parseTime(result.Header.Get("last-modified"))
+	if err != nil {
+		return nil, err
+	}
+	update := domain.NewUpdate(timeModified, "Update from github link "+link)
+	return update, nil
+}
+
+func parseTime(tm string) (time.Time, error) {
+	//Jan 2, 2006 at 3:04pm (MST)
+	if tm == "" {
+		return time.Time{}, fmt.Errorf("no last-modified date found")
+	}
+	const layout = "01/01 Mon, 2 Jan 2006 15:04:05 MST"
+	timeModified, err := time.Parse(layout, tm)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("error parsing time from last modified header github api %v", err)
+	}
+	return timeModified, nil
+
 }

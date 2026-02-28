@@ -2,7 +2,6 @@ package application
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -47,7 +46,7 @@ func (s *Scheduler) updateLinks(chat *domain.Chat) error {
 		if err != nil {
 			return err
 		}
-		if s.isUpdated(link, update) {
+		if s.isUpdated(link, *update) {
 			chats := []int64{chat.Id}
 			upd := domain2.LinkUpdate{1, link.Link, "New event from given link", chats}
 			err = s.notifier.SendUpdate(upd)
@@ -59,12 +58,11 @@ func (s *Scheduler) updateLinks(chat *domain.Chat) error {
 	return nil
 }
 
-// TODO: parse date and handle different modify markers
-func (s *Scheduler) isUpdated(link domain.Link, resp *http.Response) bool {
-	date := resp.Header.Get("Last-Modified")
-	if link.LastModified < date {
-		return true
-	}
+// TODO: compare time properly
+func (s *Scheduler) isUpdated(link domain.Link, update domain.Update) bool {
+	//if link.LastModified < update.LastModified {
+	//	return true
+	//}
 	return false
 }
 
