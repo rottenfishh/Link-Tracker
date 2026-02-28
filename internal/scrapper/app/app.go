@@ -25,9 +25,7 @@ func NewApp() (*App, error) {
 
 	repo := out.NewInMemoryRepo()
 
-	router := gin.Default()
-	handler := in.NewHttpHandler(repo)
-	registerRoutes(router, handler)
+	router := buildServer(repo)
 
 	scheduler, err := buildScheduler(*config, repo)
 	if err != nil {
@@ -43,11 +41,11 @@ func (a *App) Run() error {
 		return fmt.Errorf("error starting scheduler %v", err)
 	}
 
+	slog.Info("Starting scrapper service at port " + a.config.Port)
 	err = a.router.Run(":" + a.config.Port)
 	if err != nil {
 		return fmt.Errorf("error starting router %v", err)
 	}
-	slog.Info("Started scrapper service at port " + a.config.Port)
 	return nil
 }
 
@@ -64,6 +62,13 @@ func buildScheduler(config AppConfig, repo out.ChatRepository) (*application.Sch
 	scheduler.RegisterUpdater("stackof", stackOF)
 
 	return scheduler, nil
+}
+
+func buildServer(repo out.ChatRepository) *gin.Engine {
+	handler := in.NewHttpHandler(repo)
+	server := gin.Default()
+	registerRoutes(server, handler)
+	return server
 }
 
 func registerRoutes(router *gin.Engine, handler *in.HttpHandler) {

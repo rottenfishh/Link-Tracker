@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/byrnedo/typesafe-config/parse"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/app"
 )
 
 // TODO: build app
@@ -18,10 +17,6 @@ type AppConfig struct {
 
 // TODO: type-safety and proper config loading
 func LoadConfig() (*AppConfig, error) {
-	err := app.LoadEnv()
-	if err != nil {
-		return nil, err
-	}
 	var cfg AppConfig
 	tree, err := parse.ParseFile("scrapper.conf")
 	if err != nil {
