@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
 )
 
 type GithubClient struct {
@@ -37,7 +37,6 @@ func (c *GithubClient) FormatLink(link string) string {
 }
 
 func (c *GithubClient) GetUpdates(link string) (*domain.Update, error) {
-	//repo.getLink(link)
 	newLink := c.FormatLink(link)
 	req, err := http.NewRequest("GET", newLink, nil)
 	if err != nil {
@@ -58,15 +57,15 @@ func (c *GithubClient) GetUpdates(link string) (*domain.Update, error) {
 }
 
 func parseTime(tm string) (time.Time, error) {
-	//Jan 2, 2006 at 3:04pm (MST)
 	if tm == "" {
 		return time.Time{}, fmt.Errorf("no last-modified date found")
 	}
+
 	const layout = "01/01 Mon, 2 Jan 2006 15:04:05 MST"
 	timeModified, err := time.Parse(layout, tm)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("error parsing time from last modified header github api %v", err)
 	}
-	return timeModified, nil
 
+	return timeModified, nil
 }

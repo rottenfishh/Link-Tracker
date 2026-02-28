@@ -5,8 +5,7 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
-	domain2 "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure/out"
 )
@@ -46,9 +45,10 @@ func (s *Scheduler) updateLinks(chat *domain.Chat) error {
 		if err != nil {
 			return err
 		}
-		if s.isUpdated(link, *update) {
+
+		if update.LastModified.After(link.LastModified) {
 			chats := []int64{chat.Id}
-			upd := domain2.LinkUpdate{1, link.Link, "New event from given link", chats}
+			upd := domain.LinkUpdate{1, link.Link, "New event from given link", chats}
 			err = s.notifier.SendUpdate(upd)
 			if err != nil {
 				return err
@@ -58,18 +58,10 @@ func (s *Scheduler) updateLinks(chat *domain.Chat) error {
 	return nil
 }
 
-// TODO: compare time properly
-func (s *Scheduler) isUpdated(link domain.Link, update domain.Update) bool {
-	//if link.LastModified < update.LastModified {
-	//	return true
-	//}
-	return false
-}
-
 func (s *Scheduler) StartScheduler() error {
 	j, err := s.NewJob(
 		gocron.DurationJob(
-			200*time.Second,
+			100*time.Second,
 		),
 		gocron.NewTask(s.updateUsers()),
 	)

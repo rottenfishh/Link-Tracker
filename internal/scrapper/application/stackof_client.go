@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
 )
 
 // https://api.stackexchange.com/2.3/questions/54632086?order=desc&sort=activity&site=stackoverflow example
