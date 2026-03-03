@@ -14,7 +14,7 @@ import (
 
 type App struct {
 	dispatcher *application.Dispatcher
-	adapter    *infrastructure.TgAdapter
+	adapter    *infrastructure.TgClient
 	server     *gin.Engine
 	config     AppConfig
 }
@@ -38,6 +38,7 @@ func NewApp() *App {
 }
 
 // TODO: FAN-IN pattern for accepting events from both tg and http channels
+// TODO: idk how to do this
 func (a *App) RunService(ctx *context.Context) {
 	slog.Info("Starting service. Accepting user messages")
 
@@ -48,14 +49,14 @@ func (a *App) RunService(ctx *context.Context) {
 		}
 	}()
 
-	updates := a.adapter.Bot.GetUpdatesChan(a.adapter.UpdateConfig)
+	updates := a.adapter.GetUpdates()
 
 	for update := range updates {
 		if update.Message == nil {
 			continue
 		}
 
-		serverResponse, err := a.dispatcher.Dispatch(ctx, update.Message.Text)
+		serverResponse, err := a.dispatcher.Dispatch(ctx, update.Message.Text, update.Message.Chat.ID)
 		if err != nil {
 
 			slog.Error("Dispatching error", "err", err)
@@ -75,8 +76,9 @@ func BuildDispatcher() *application.Dispatcher {
 	track := &commands.TrackCommand{}
 	untrack := &commands.UntrackCommand{}
 	list := &commands.ListCommand{}
+	cancel := &commands.CancelCommand{}
 
-	cmds := []commands.Command{help, start, fallback, track, untrack, list}
+	cmds := []application.Command{help, start, fallback, track, untrack, list, cancel}
 
 	d := application.NewDispatcher()
 	for _, cmd := range cmds {

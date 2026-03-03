@@ -4,16 +4,16 @@ import (
 	"log/slog"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/commands"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
 )
 
-type TgAdapter struct {
+type TgClient struct {
 	Bot          *tgbotapi.BotAPI
 	UpdateConfig tgbotapi.UpdateConfig
 }
 
-func NewTgAdapter(key string, debug bool) *TgAdapter {
-	slog.Info("Initializing TgAdapter")
+func NewTgAdapter(key string, debug bool) *TgClient {
+	slog.Info("Initializing TgClient")
 
 	bot, err := tgbotapi.NewBotAPI(key)
 	if err != nil {
@@ -25,7 +25,7 @@ func NewTgAdapter(key string, debug bool) *TgAdapter {
 	updateConfig.Timeout = 30
 	SetUpTgCommands(bot)
 
-	return &TgAdapter{Bot: bot, UpdateConfig: updateConfig}
+	return &TgClient{Bot: bot, UpdateConfig: updateConfig}
 }
 
 // TODO: use command structs to extract this info?
@@ -36,6 +36,7 @@ func SetUpTgCommands(bot *tgbotapi.BotAPI) {
 		{Command: "track", Description: "track given link"},
 		{Command: "untrack", Description: "untrack given link"},
 		{Command: "list", Description: "get list of tracked links"},
+		{Command: "cancel", Description: "cancel current command execution"},
 	}
 	cfg := tgbotapi.NewSetMyCommands(cmds...)
 	_, err := bot.Request(cfg)
@@ -45,11 +46,15 @@ func SetUpTgCommands(bot *tgbotapi.BotAPI) {
 }
 
 // TODO: different message type? (i.e. photo)
-func (a *TgAdapter) SendMessage(update tgbotapi.Update, message *commands.Message) error {
+func (a *TgClient) SendMessage(update tgbotapi.Update, message *application.Message) error {
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, message.Text)
 	_, err := a.Bot.Send(msg)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (a *TgClient) GetUpdates() tgbotapi.UpdatesChannel {
+	return a.Bot.GetUpdatesChan(a.UpdateConfig)
 }

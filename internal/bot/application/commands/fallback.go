@@ -2,6 +2,8 @@ package commands
 
 import (
 	"context"
+
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
 )
 
 type FallBackCommand struct {
@@ -14,6 +16,6 @@ func (cmd *FallBackCommand) Name() string {
 func (cmd *FallBackCommand) Description() string {
 	return "Fallback for unknown command"
 }
-func (cmd *FallBackCommand) Execute(ctx *context.Context, args []string) (*Message, error) {
-	return NewMessage("Неизвестная команда. Введите /help для просмотра доступных команд."), nil
+func (cmd *FallBackCommand) Execute(ctx *context.Context, state *application.State) (*application.CommandResult, error) {
+	return application.NewCommandResult(true, "Неизвестная команда. Введите /help для просмотра доступных команд."), nil
 }
