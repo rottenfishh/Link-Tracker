@@ -27,7 +27,9 @@ func NewApp() *App {
 		slog.Error("Error loading config ", "error: ", err)
 		return nil
 	}
-	dispatcher := BuildDispatcher()
+
+	scrapper := infrastructure.NewScrapperClient(cfg.ScrapperUrl)
+	dispatcher := BuildDispatcher(scrapper)
 	adapter := infrastructure.NewTgAdapter(cfg.Telegram.Token, cfg.Telegram.Debug)
 
 	slog.Info("Finished setting up service")
@@ -69,11 +71,11 @@ func (a *App) RunService(ctx *context.Context) {
 	}
 }
 
-func BuildDispatcher() *application.Dispatcher {
+func BuildDispatcher(scrapperCl infrastructure.ScrapperClient) *application.Dispatcher {
 	help := &commands.HelpCommand{}
 	start := &commands.StartCommand{}
 	fallback := &commands.FallBackCommand{}
-	track := &commands.TrackCommand{}
+	track := &commands.TrackCommand{ScrapperClient: scrapperCl}
 	untrack := &commands.UntrackCommand{}
 	list := &commands.ListCommand{}
 	cancel := &commands.CancelCommand{}

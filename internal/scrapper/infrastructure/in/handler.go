@@ -11,7 +11,7 @@ import (
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure/out"
 )
 
-// TODO: use goddamn dtos please
+// TODO: create service layer
 type HttpHandler struct {
 	repo out.ChatRepository
 }

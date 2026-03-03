@@ -5,10 +5,11 @@ import (
 	"os"
 
 	"github.com/byrnedo/typesafe-config/parse"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/app"
 )
 
 // TODO: build app
-type AppConfig struct {
+type ScrapperAppConfig struct {
 	GithubToken  string `config:"github_token"`
 	StackOFToken string `config:"stack_of_token"`
 	BotUrl       string `config:"bot_url"`
@@ -16,15 +17,19 @@ type AppConfig struct {
 }
 
 // TODO: type-safety and proper config loading
-func LoadConfig() (*AppConfig, error) {
-	var cfg AppConfig
+func LoadConfig() (*ScrapperAppConfig, error) {
+	err := app.LoadEnv()
+	if err != nil {
+		return nil, err
+	}
+	var cfg ScrapperAppConfig
 	tree, err := parse.ParseFile("scrapper.conf")
 	if err != nil {
 		return nil, err
 	}
-	parse.Populate(cfg, tree.GetConfig(), "root")
+	parse.Populate(&cfg, tree.GetConfig(), "root")
 
-	ghToken := os.Getenv("GITHUB_ACCESS_TOKEN")
+	ghToken := os.Getenv("GITHUB_API_TOKEN")
 	if ghToken == "" {
 		return nil, errors.New("GITHUB_ACCESS_TOKEN environment variable not set")
 	}

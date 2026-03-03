@@ -14,7 +14,7 @@ import (
 type App struct {
 	scheduler *application.Scheduler
 	router    *gin.Engine
-	config    AppConfig
+	config    ScrapperAppConfig
 }
 
 func NewApp() (*App, error) {
@@ -49,7 +49,7 @@ func (a *App) Run() error {
 	return nil
 }
 
-func buildScheduler(config AppConfig, repo out.ChatRepository) (*application.Scheduler, error) {
+func buildScheduler(config ScrapperAppConfig, repo out.ChatRepository) (*application.Scheduler, error) {
 	github := application.NewGithubClient(config.GithubToken)
 	stackOF := application.NewStackOverflowClient(config.StackOFToken)
 	notifier := infrastructure.NewBotHttpNotifier(config.BotUrl)

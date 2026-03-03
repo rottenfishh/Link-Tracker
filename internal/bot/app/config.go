@@ -15,8 +15,9 @@ type TelegramConfig struct {
 }
 
 type AppConfig struct {
-	Telegram TelegramConfig `config:"telegram"`
-	Port     int            `config:"port,default=8080"`
+	Port        int            `config:"port, default=8080"`
+	ScrapperUrl string         `config:"scrapper_url"`
+	Telegram    TelegramConfig `config:"telegram"`
 }
 
 func LoadEnv() error {

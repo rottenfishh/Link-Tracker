@@ -86,7 +86,7 @@ func (s *Scheduler) StartScheduler() error {
 		gocron.DurationJob(
 			100*time.Second,
 		),
-		gocron.NewTask(s.updateUsers()),
+		gocron.NewTask(s.updateUsers),
 	)
 	if err != nil {
 		return fmt.Errorf("error creating scheduler job: %v", err)

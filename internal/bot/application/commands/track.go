@@ -5,9 +5,13 @@ import (
 	"fmt"
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/dto"
 )
 
+// т.н. dependency injection
 type TrackCommand struct {
+	ScrapperClient infrastructure.ScrapperClient
 }
 
 func (cmd *TrackCommand) Name() string {
@@ -40,13 +44,18 @@ func (cmd *TrackCommand) Execute(ctx *context.Context, state *application.State)
 	}
 	if state.Step == 2 {
 		link := state.Data["link"].(string)
-		if len(state.UserArgs) == 0 {
-			// TODO: Scrapper.RegisterLink(link)
-			return application.NewCommandResult(true, "Успешно начали отслеживание ссылки "+link), nil
+
+		req := dto.AddLinkRequest{
+			Link: link,
+			Tags: state.UserArgs,
 		}
-		tags := state.UserArgs
-		// TODO: Scapprer.RegisterLink(link, tags). all tags
-		return application.NewCommandResult(true, "Успешно начали отслеживание ссылки "+link+" с тегами"+tags[0]), nil
+
+		err := cmd.ScrapperClient.RegisterLink(state.ChatId, req)
+		if err != nil {
+			return application.NewCommandResult(true, "Не удалось начать отслеживать ссылку "+link), err
+		}
+
+		return application.NewCommandResult(true, "Успешно начали отслеживание ссылки "+link), nil
 	}
 
 	return application.NewCommandResult(true, "Неизвестная команда"), fmt.Errorf("unknown command %v", state.UserArgs)
