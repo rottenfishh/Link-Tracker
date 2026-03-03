@@ -1,17 +1,36 @@
 package in
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
+)
 
-func BuildServer() error {
+type Server struct {
+	Updates chan domain.LinkUpdate
+	router  *gin.Engine
+	url     string
+}
+
+func NewServer(url string) *Server {
 	router := gin.Default()
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-	err := router.Run()
-	if err != nil {
-		return err
-	} // listens on 0.0.0.0:8080 by default
-	return nil
+	updChan := make(chan domain.LinkUpdate)
+	handler := HttpHandler{updChan}
+	registerRoutes(router, handler)
+	return &Server{
+		Updates: updChan,
+		router:  router,
+		url:     url,
+	}
+}
+
+func registerRoutes(router *gin.Engine, handler HttpHandler) {
+	router.POST("/updates", handler.UpdateFromLink)
+}
+
+func (server *Server) GetUpdates() chan domain.LinkUpdate {
+	return server.Updates
+}
+
+func (server *Server) Run() error {
+	return server.router.Run(server.url)
 }

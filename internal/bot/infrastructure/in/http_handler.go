@@ -8,7 +8,7 @@ import (
 )
 
 type HttpHandler struct {
-	updates []chan domain.Update
+	Updates chan domain.LinkUpdate
 }
 
 // TODO: when receiving update, send it to main thread, via channel
@@ -18,5 +18,6 @@ func (h *HttpHandler) UpdateFromLink(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 	// update users
+	h.Updates <- update
 	c.IndentedJSON(http.StatusOK, update)
 }
