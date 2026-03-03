@@ -72,9 +72,9 @@ func buildServer(repo out.ChatRepository) *gin.Engine {
 }
 
 func registerRoutes(router *gin.Engine, handler *in.HttpHandler) {
-	router.POST("/tg-chat/{id}", handler.RegisterChat)
-	router.DELETE("/tg-chat/{id}", handler.DeleteChat)
-	router.GET("/links/{id}", handler.GetLinksByChatId)
-	router.POST("links/{id}", handler.AddLink)
-	router.DELETE("links/{id}", handler.DeleteLink)
+	router.POST("/tg-chat/:id", handler.RegisterChat)
+	router.DELETE("/tg-chat/:id", handler.DeleteChat)
+	router.GET("/links/:id", handler.GetLinksByChatId)
+	router.POST("/links/:id", handler.AddLink)
+	router.DELETE("/links/:id", handler.DeleteLink)
 }

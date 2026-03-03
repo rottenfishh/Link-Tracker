@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
@@ -21,8 +22,25 @@ type StackOverflowClient struct {
 func NewStackOverflowClient(token string) *StackOverflowClient {
 	return &StackOverflowClient{http.DefaultClient, token}
 }
-func (c *StackOverflowClient) FormatLink(link string) string {
-	return fmt.Sprintf("https://www.stackoverflow.com/questions/%d/%s", os.Getpid(), link)
+func (c *StackOverflowClient) FormatLink(link string) (string, error) {
+	u, err := url.Parse(link)
+	if err != nil {
+		return "", err
+	}
+
+	parts := strings.Split(u.Path, "/")
+	if len(parts) < 3 || parts[1] != "questions" {
+		return "", fmt.Errorf("invalid stackoverflow question url")
+	}
+
+	questionID := parts[2]
+
+	apiURL := fmt.Sprintf(
+		"https://api.stackexchange.com/2.3/questions/%s?site=stackoverflow",
+		questionID,
+	)
+
+	return apiURL, nil
 }
 
 func (c *StackOverflowClient) GetUpdates(link string) (*domain.Update, error) {

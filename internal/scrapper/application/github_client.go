@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -28,16 +29,30 @@ func NewGithubClient(token string) *GithubClient {
 //https://github.com/golang/go
 //https://api.github.com/repos/golang/go
 
-func (c *GithubClient) FormatLink(link string) string {
-	parts := strings.Split(link, "/")
-	parts = parts[:2]
-	newLink := "https://api.github.com/repos/" + strings.Join(parts, "/")
-	slog.Info(newLink)
-	return newLink
+func (c *GithubClient) FormatLink(link string) (string, error) {
+	u, err := url.Parse(link)
+	if err != nil {
+		return "", err
+	}
+
+	parts := strings.Split(strings.Trim(u.Path, "/"), "/")
+	if len(parts) < 2 {
+		return "", fmt.Errorf("invalid github url")
+	}
+
+	owner := parts[0]
+	repo := parts[1]
+
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s", owner, repo)
+	slog.Info(apiURL)
+	return apiURL, nil
 }
 
 func (c *GithubClient) GetUpdates(link string) (*domain.Update, error) {
-	newLink := c.FormatLink(link)
+	newLink, err := c.FormatLink(link)
+	if err != nil {
+		return nil, err
+	}
 	req, err := http.NewRequest("GET", newLink, nil)
 	if err != nil {
 		return nil, err

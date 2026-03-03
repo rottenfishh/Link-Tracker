@@ -5,6 +5,6 @@ import (
 )
 
 type LinkUpdater interface {
-	FormatLink(link string) string
+	FormatLink(link string) (string, error)
 	GetUpdates(link string) (*domain.Update, error)
 }

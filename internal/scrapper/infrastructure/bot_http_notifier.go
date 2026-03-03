@@ -20,6 +20,7 @@ func NewBotHttpNotifier(url string) *BotHttpNotifier {
 
 // TODO: return response
 func (n *BotHttpNotifier) SendUpdate(update domain.LinkUpdate) error {
+	slog.Info("Sending update ", "chat ", update.TgChatIds, " url ", update.Url)
 	body, err := json.Marshal(update)
 	if err != nil {
 		return err
