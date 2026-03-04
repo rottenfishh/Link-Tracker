@@ -24,10 +24,11 @@ func NewApp() (*App, error) {
 	}
 
 	repo := out.NewInMemoryRepo()
+	service := application.NewChatService(repo)
 
-	router := buildServer(repo)
+	router := buildServer(service)
 
-	scheduler, err := buildScheduler(*config, repo)
+	scheduler, err := buildScheduler(*config, service)
 	if err != nil {
 		return nil, fmt.Errorf("error while building scheduler %v", err)
 	}
@@ -49,12 +50,12 @@ func (a *App) Run() error {
 	return nil
 }
 
-func buildScheduler(config ScrapperAppConfig, repo out.ChatRepository) (*application.Scheduler, error) {
+func buildScheduler(config ScrapperAppConfig, service *application.ChatService) (*application.Scheduler, error) {
 	github := application.NewGithubClient(config.GithubToken)
 	stackOF := application.NewStackOverflowClient(config.StackOFToken)
 	notifier := infrastructure.NewBotHttpNotifier(config.BotUrl)
 
-	scheduler, err := application.NewScheduler(notifier, repo)
+	scheduler, err := application.NewScheduler(notifier, service)
 	if err != nil {
 		return nil, fmt.Errorf("error while building scheduler %v", err)
 	}
@@ -64,8 +65,8 @@ func buildScheduler(config ScrapperAppConfig, repo out.ChatRepository) (*applica
 	return scheduler, nil
 }
 
-func buildServer(repo out.ChatRepository) *gin.Engine {
-	handler := in.NewHttpHandler(repo)
+func buildServer(service *application.ChatService) *gin.Engine {
+	handler := in.NewHttpHandler(service)
 	server := gin.Default()
 	registerRoutes(server, handler)
 	return server

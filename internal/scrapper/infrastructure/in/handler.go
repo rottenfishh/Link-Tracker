@@ -6,19 +6,18 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/dto"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure/out"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/application"
 )
 
 // TODO: create service layer
 // TODO: кидать свои собственные ошибки
 type HttpHandler struct {
-	repo out.ChatRepository
+	service *application.ChatService
 }
 
-func NewHttpHandler(repo out.ChatRepository) *HttpHandler {
-	return &HttpHandler{repo}
+func NewHttpHandler(service *application.ChatService) *HttpHandler {
+	return &HttpHandler{service: service}
 }
 
 func (h *HttpHandler) RegisterChat(c *gin.Context) {
@@ -30,15 +29,13 @@ func (h *HttpHandler) RegisterChat(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errResp)
 	}
 
-	chat := domain.NewChat(idInt)
-	err = h.repo.SaveChat(chat)
-
+	chat, err := h.service.RegisterChat(idInt)
 	if err != nil {
 		errResp := dto.NewRepositoryError("Error saving chat", err)
 		c.IndentedJSON(http.StatusInternalServerError, errResp)
 	}
 
-	c.IndentedJSON(http.StatusOK, chat)
+	c.IndentedJSON(http.StatusOK, *chat)
 }
 
 func (h *HttpHandler) DeleteChat(c *gin.Context) {
@@ -50,7 +47,7 @@ func (h *HttpHandler) DeleteChat(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errResp)
 	}
 
-	err = h.repo.DeleteChat(idInt)
+	err = h.service.DeleteChat(idInt)
 	if err != nil {
 		errResp := dto.NewRepositoryError("Error deleting chat", err)
 		c.JSON(http.StatusInternalServerError, errResp)
@@ -68,7 +65,7 @@ func (h *HttpHandler) GetLinksByChatId(c *gin.Context) {
 		return
 	}
 
-	links, err := h.repo.GetLinksById(idInt)
+	links, err := h.service.GetLinksByChatId(idInt)
 	if err != nil {
 		errResp := dto.NewRepositoryError("Error getting links", err)
 		c.JSON(http.StatusInternalServerError, errResp)
@@ -99,20 +96,17 @@ func (h *HttpHandler) AddLink(c *gin.Context) {
 		return
 	}
 
-	linkDomain := domain.NewLink(link.Link, link.Tags)
-
-	addedLink, err := h.repo.AddLink(idInt, *linkDomain)
+	addedLink, err := h.service.AddLink(idInt, link)
 	if err != nil {
 		errResp := dto.NewRepositoryError("Error adding link", err)
 		c.JSON(http.StatusInternalServerError, errResp)
 		return
 	}
-	linkResp := dto.ToLinkResponse(addedLink)
+	linkResp := dto.ToLinkResponse(*addedLink)
 
 	c.IndentedJSON(http.StatusOK, linkResp)
 }
 
-// TODO: accept only link in body
 func (h *HttpHandler) DeleteLink(c *gin.Context) {
 	id := c.Param("id")
 
@@ -130,7 +124,7 @@ func (h *HttpHandler) DeleteLink(c *gin.Context) {
 		return
 	}
 
-	err = h.repo.DeleteLink(idInt, link.Link)
+	err = h.service.DeleteLink(idInt, link)
 	if err != nil {
 		errResp := dto.NewRepositoryError("Error deleting link", err)
 		c.JSON(http.StatusInternalServerError, errResp)

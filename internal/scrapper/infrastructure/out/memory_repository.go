@@ -42,7 +42,7 @@ func (r *InMemoryRepo) GetLinksById(chatId int64) ([]domain.Link, error) {
 	return links, nil
 }
 
-func (r *InMemoryRepo) AddLink(chatId int64, link domain.Link) (domain.Link, error) {
+func (r *InMemoryRepo) AddLink(chatId int64, link domain.Link) (*domain.Link, error) {
 	_, ok := r.Chats[chatId]
 	if !ok {
 		r.Chats[chatId] = domain.NewChat(chatId)
@@ -53,20 +53,20 @@ func (r *InMemoryRepo) AddLink(chatId int64, link domain.Link) (domain.Link, err
 	r.Chats[chatId].Links = append(r.Chats[chatId].Links, link)
 
 	r.Subscribers[link.Link] = append(r.Subscribers[link.Link], chatId)
-	return link, nil
+	return &link, nil
 }
 
-func (r *InMemoryRepo) UpdateLink(chatId int64, link domain.Link) error {
+func (r *InMemoryRepo) UpdateLink(chatId int64, link domain.Link) (*domain.Link, error) {
 	_, ok := r.Chats[chatId]
 	if !ok {
-		return fmt.Errorf("chat with id %d not found", chatId)
+		return nil, fmt.Errorf("chat with id %d not found", chatId)
 	}
 	for i, savedLink := range r.Chats[chatId].Links {
 		if savedLink.Id == link.Id {
 			r.Chats[chatId].Links[i] = link
 		}
 	}
-	return nil
+	return &link, nil
 }
 
 // TODO: create func

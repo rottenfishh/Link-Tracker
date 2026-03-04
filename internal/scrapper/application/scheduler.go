@@ -8,7 +8,6 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure/out"
 )
 
 // TODO: fix this. interface for updaters
@@ -16,12 +15,12 @@ import (
 // map [site domain] = notifier
 type Scheduler struct {
 	gocron.Scheduler
-	repo     out.ChatRepository
+	service  *ChatService
 	notifier infrastructure.Notifier
 	updaters map[string]LinkUpdater
 }
 
-func NewScheduler(notifier infrastructure.Notifier, repo out.ChatRepository) (*Scheduler, error) {
+func NewScheduler(notifier infrastructure.Notifier, service *ChatService) (*Scheduler, error) {
 	s, err := gocron.NewScheduler()
 	if err != nil {
 		return nil, err
@@ -29,8 +28,7 @@ func NewScheduler(notifier infrastructure.Notifier, repo out.ChatRepository) (*S
 
 	updaters := make(map[string]LinkUpdater)
 
-	//repo := out.InMemoryRepo{make(map[int64]*domain.Chat), make(map[string][]int64)}
-	return &Scheduler{s, repo, notifier, updaters}, nil
+	return &Scheduler{s, service, notifier, updaters}, nil
 }
 
 func (s *Scheduler) RegisterUpdater(name string, updater LinkUpdater) {
@@ -43,7 +41,7 @@ func (s *Scheduler) GetUpdater(name string) LinkUpdater {
 
 // TODO: нужно идти по линкам, а не по чатам, и уведомлять всех, кто подписан на линк.
 func (s *Scheduler) updateUsers() error {
-	chats, err := s.repo.GetChats()
+	chats, err := s.service.GetChats()
 	if err != nil {
 		return err
 	}
@@ -84,7 +82,7 @@ func (s *Scheduler) updateLinks(chat domain.Chat) error {
 			}
 
 			link.LastModified = update.LastModified
-			err = s.repo.UpdateLink(chat.Id, link)
+			_, err = s.service.UpdateLink(chat.Id, link)
 			if err != nil {
 				slog.Error("error updating link time in repo", "error", err)
 				return err

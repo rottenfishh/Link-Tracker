@@ -11,8 +11,8 @@ type ChatRepository interface {
 	GetChats() ([]domain.Chat, error)
 	DeleteChat(chatId int64) error
 	GetLinksById(chatId int64) ([]domain.Link, error)
-	AddLink(chatId int64, link domain.Link) (domain.Link, error)
-	UpdateLink(chatId int64, link domain.Link) error
+	AddLink(chatId int64, link domain.Link) (*domain.Link, error)
+	UpdateLink(chatId int64, link domain.Link) (*domain.Link, error)
 	DeleteLink(chatId int64, linkName string) error
 	GetChatsByLink(link string) ([]int64, error)
 }
