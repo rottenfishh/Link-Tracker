@@ -83,7 +83,7 @@ func (c *ScrapperHttpClient) RegisterLink(chatID int64, request dto.AddLinkReque
 	return nil
 }
 
-func (c *ScrapperHttpClient) DeleteLink(chatID int64, link string) error {
+func (c *ScrapperHttpClient) DeleteLink(chatID int64, link dto.DeleteLinkRequest) error {
 	urlPath := c.url + "/links/" + strconv.FormatInt(chatID, 10)
 
 	body, err := json.Marshal(link)
@@ -103,6 +103,7 @@ func (c *ScrapperHttpClient) DeleteLink(chatID int64, link string) error {
 
 	defer do.Body.Close()
 	if do.StatusCode != http.StatusOK {
+
 		return fmt.Errorf("unexpected status code: %d", do.StatusCode)
 	}
 	return nil

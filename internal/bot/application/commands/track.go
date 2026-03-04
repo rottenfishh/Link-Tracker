@@ -23,7 +23,7 @@ func (cmd *TrackCommand) Description() string {
 	return "Command to start tracking events from a given link"
 }
 
-// TODO: check for no args
+// TODO: inline buttons for skipping tags
 // get link. after that adapter sets flag for start of state machine(int ctx, for example)
 // . if flag is set, accept args as tags. /cancel is processed in adapter, and sent to this cmmand to. if its sent, we save stuff
 func (cmd *TrackCommand) Execute(ctx *context.Context, state *application.State) (*application.CommandResult, error) {

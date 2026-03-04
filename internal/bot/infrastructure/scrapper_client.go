@@ -6,6 +6,6 @@ type ScrapperClient interface {
 	RegisterChat(chatID int64) error
 	DeleteChat(chatID int64) error
 	RegisterLink(chatID int64, request dto.AddLinkRequest) error
-	DeleteLink(chatID int64, link string) error
+	DeleteLink(chatID int64, link dto.DeleteLinkRequest) error
 	GetLinks(chatID int64) ([]dto.LinkResponse, error)
 }

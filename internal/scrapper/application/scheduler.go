@@ -73,6 +73,8 @@ func (s *Scheduler) updateLinks(chat domain.Chat) error {
 		}
 
 		if update.LastModified.After(link.LastModified) {
+			slog.Info("KILL MYSELF")
+			slog.Info("Updating ", link.Link, "time", link.LastModified, " to ", update.LastModified)
 			chats := []int64{chat.Id}
 			upd := domain.NewLinkUpdate(1, link.Link, "New event from given link", chats)
 			err = s.notifier.SendUpdate(*upd)
@@ -80,12 +82,13 @@ func (s *Scheduler) updateLinks(chat domain.Chat) error {
 				slog.Error("error sending update to bot", "error", err)
 				return err
 			}
-		}
-		link.LastModified = update.LastModified
-		_, err = s.repo.AddLink(chat.Id, link)
-		if err != nil {
-			slog.Error("error updating link time in repo", "error", err)
-			return err
+
+			link.LastModified = update.LastModified
+			err = s.repo.UpdateLink(chat.Id, link)
+			if err != nil {
+				slog.Error("error updating link time in repo", "error", err)
+				return err
+			}
 		}
 	}
 	return nil
@@ -97,6 +100,7 @@ func (s *Scheduler) StartScheduler() error {
 			30*time.Second,
 		),
 		gocron.NewTask(s.updateUsers),
+		gocron.WithSingletonMode(gocron.LimitModeWait),
 	)
 	if err != nil {
 		return fmt.Errorf("error creating scheduler job: %v", err)

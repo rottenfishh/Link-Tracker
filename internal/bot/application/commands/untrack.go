@@ -6,6 +6,7 @@ import (
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/dto"
 )
 
 type UntrackCommand struct {
@@ -21,7 +22,11 @@ func (cmd *UntrackCommand) Description() string {
 }
 func (cmd *UntrackCommand) Execute(ctx *context.Context, state *application.State) (*application.CommandResult, error) {
 	// Scrapper.unsubscribe
-	err := cmd.ScrapperClient.DeleteLink(state.ChatId, state.UserArgs[0])
+	if len(state.UserArgs) == 0 {
+		return application.NewCommandResult(true, "You need to provide a link to untrack"), nil
+	}
+	req := dto.DeleteLinkRequest{Link: state.UserArgs[0]}
+	err := cmd.ScrapperClient.DeleteLink(state.ChatId, req)
 	if err != nil {
 		slog.Error("Unregistering link error ", "chatId", state.ChatId, "link", state.UserArgs[0], "error", err)
 		return nil, err

@@ -68,7 +68,7 @@ func (c *GithubClient) GetUpdates(link string) (*domain.Update, error) {
 		return nil, err
 	}
 	update := domain.NewUpdate(timeModified, "Update from github link "+link)
-	slog.Info("github update: ", update)
+	slog.Info("github update", "update: ", update)
 	return update, nil
 }
 

@@ -9,10 +9,11 @@ import (
 type InMemoryRepo struct {
 	Chats       map[int64]*domain.Chat
 	Subscribers map[string][]int64
+	nextLinkId  int64
 }
 
 func NewInMemoryRepo() *InMemoryRepo {
-	return &InMemoryRepo{make(map[int64]*domain.Chat), make(map[string][]int64)}
+	return &InMemoryRepo{make(map[int64]*domain.Chat), make(map[string][]int64), 0}
 }
 func (r *InMemoryRepo) SaveChat(chat *domain.Chat) error {
 	r.Chats[chat.Id] = chat
@@ -46,10 +47,26 @@ func (r *InMemoryRepo) AddLink(chatId int64, link domain.Link) (domain.Link, err
 	if !ok {
 		r.Chats[chatId] = domain.NewChat(chatId)
 	}
+	r.nextLinkId++
+	link.Id = r.nextLinkId
+
 	r.Chats[chatId].Links = append(r.Chats[chatId].Links, link)
 
 	r.Subscribers[link.Link] = append(r.Subscribers[link.Link], chatId)
 	return link, nil
+}
+
+func (r *InMemoryRepo) UpdateLink(chatId int64, link domain.Link) error {
+	_, ok := r.Chats[chatId]
+	if !ok {
+		return fmt.Errorf("chat with id %d not found", chatId)
+	}
+	for i, savedLink := range r.Chats[chatId].Links {
+		if savedLink.Id == link.Id {
+			r.Chats[chatId].Links[i] = link
+		}
+	}
+	return nil
 }
 
 // TODO: create func

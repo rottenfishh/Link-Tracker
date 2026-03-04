@@ -2,7 +2,6 @@ package in
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -13,6 +12,7 @@ import (
 )
 
 // TODO: create service layer
+// TODO: кидать свои собственные ошибки
 type HttpHandler struct {
 	repo out.ChatRepository
 }
@@ -26,14 +26,16 @@ func (h *HttpHandler) RegisterChat(c *gin.Context) {
 
 	idInt, err := parseId(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		errResp := dto.NewRequestParsingError(err)
+		c.JSON(http.StatusBadRequest, errResp)
 	}
 
 	chat := domain.NewChat(idInt)
 	err = h.repo.SaveChat(chat)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		errResp := dto.NewRepositoryError("Error saving chat", err)
+		c.IndentedJSON(http.StatusInternalServerError, errResp)
 	}
 
 	c.IndentedJSON(http.StatusOK, chat)
@@ -44,12 +46,14 @@ func (h *HttpHandler) DeleteChat(c *gin.Context) {
 
 	idInt, err := parseId(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		errResp := dto.NewRequestParsingError(err)
+		c.JSON(http.StatusBadRequest, errResp)
 	}
 
 	err = h.repo.DeleteChat(idInt)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		errResp := dto.NewRepositoryError("Error deleting chat", err)
+		c.JSON(http.StatusInternalServerError, errResp)
 	}
 	c.IndentedJSON(http.StatusOK, gin.H{"id": id})
 }
@@ -59,13 +63,15 @@ func (h *HttpHandler) GetLinksByChatId(c *gin.Context) {
 
 	idInt, err := parseId(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		errResp := dto.NewRequestParsingError(err)
+		c.JSON(http.StatusBadRequest, errResp)
 		return
 	}
 
 	links, err := h.repo.GetLinksById(idInt)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		errResp := dto.NewRepositoryError("Error getting links", err)
+		c.JSON(http.StatusInternalServerError, errResp)
 		return
 	}
 
@@ -82,14 +88,14 @@ func (h *HttpHandler) AddLink(c *gin.Context) {
 
 	idInt, err := parseId(id)
 	if err != nil {
-		slog.Error("Addlink", "id parsing error", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		errResp := dto.NewRequestParsingError(err)
+		c.JSON(http.StatusBadRequest, errResp)
 		return
 	}
 	var link dto.AddLinkRequest
 	if err := c.BindJSON(&link); err != nil {
-		slog.Error("Addlink", "json parsing error", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		errResp := dto.NewRequestParsingError(err)
+		c.JSON(http.StatusBadRequest, errResp)
 		return
 	}
 
@@ -97,8 +103,8 @@ func (h *HttpHandler) AddLink(c *gin.Context) {
 
 	addedLink, err := h.repo.AddLink(idInt, *linkDomain)
 	if err != nil {
-		slog.Error("Addlink", "adding to repo error", err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		errResp := dto.NewRepositoryError("Error adding link", err)
+		c.JSON(http.StatusInternalServerError, errResp)
 		return
 	}
 	linkResp := dto.ToLinkResponse(addedLink)
@@ -112,19 +118,22 @@ func (h *HttpHandler) DeleteLink(c *gin.Context) {
 
 	idInt, err := parseId(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		errResp := dto.NewRequestParsingError(err)
+		c.JSON(http.StatusBadRequest, errResp)
 		return
 	}
 
-	var link dto.AddLinkRequest
+	var link dto.DeleteLinkRequest
 	if err := c.BindJSON(&link); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		errResp := dto.NewRequestParsingError(err)
+		c.JSON(http.StatusBadRequest, errResp)
 		return
 	}
 
 	err = h.repo.DeleteLink(idInt, link.Link)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		errResp := dto.NewRepositoryError("Error deleting link", err)
+		c.JSON(http.StatusInternalServerError, errResp)
 		return
 	}
 	c.IndentedJSON(http.StatusOK, gin.H{"id": id})

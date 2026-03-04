@@ -119,7 +119,7 @@ func BuildDispatcher(scrapperCl infrastructure.ScrapperClient) *application.Disp
 	fallback := &commands.FallBackCommand{}
 	track := &commands.TrackCommand{ScrapperClient: scrapperCl}
 	untrack := &commands.UntrackCommand{ScrapperClient: scrapperCl}
-	list := &commands.ListCommand{}
+	list := &commands.ListCommand{ScrapperCLient: scrapperCl}
 	cancel := &commands.CancelCommand{}
 
 	cmds := []application.Command{help, start, fallback, track, untrack, list, cancel}
