@@ -2,6 +2,7 @@ package in
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -81,11 +82,13 @@ func (h *HttpHandler) AddLink(c *gin.Context) {
 
 	idInt, err := parseId(id)
 	if err != nil {
+		slog.Error("Addlink", "id parsing error", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 	var link dto.AddLinkRequest
 	if err := c.BindJSON(&link); err != nil {
+		slog.Error("Addlink", "json parsing error", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
@@ -94,6 +97,7 @@ func (h *HttpHandler) AddLink(c *gin.Context) {
 
 	addedLink, err := h.repo.AddLink(idInt, *linkDomain)
 	if err != nil {
+		slog.Error("Addlink", "adding to repo error", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}

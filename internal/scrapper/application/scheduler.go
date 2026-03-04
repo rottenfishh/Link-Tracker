@@ -50,12 +50,14 @@ func (s *Scheduler) updateUsers() error {
 	for _, chat := range chats {
 		err = s.updateLinks(chat)
 		if err != nil {
+			slog.Error("error updating links: ", "error ", err, " chat", chat)
 			return err
 		}
 	}
 	return nil
 }
 
+// TODO: save new time for link in repo properly
 func (s *Scheduler) updateLinks(chat domain.Chat) error {
 	for _, link := range chat.Links {
 		tracker := s.updaters[link.Domain]
@@ -64,6 +66,7 @@ func (s *Scheduler) updateLinks(chat domain.Chat) error {
 			continue
 		}
 
+		slog.Info("Requesting update from ", "link", link.Link)
 		update, err := tracker.GetUpdates(link.Link)
 		if err != nil {
 			return err
@@ -74,8 +77,15 @@ func (s *Scheduler) updateLinks(chat domain.Chat) error {
 			upd := domain.NewLinkUpdate(1, link.Link, "New event from given link", chats)
 			err = s.notifier.SendUpdate(*upd)
 			if err != nil {
+				slog.Error("error sending update to bot", "error", err)
 				return err
 			}
+		}
+		link.LastModified = update.LastModified
+		_, err = s.repo.AddLink(chat.Id, link)
+		if err != nil {
+			slog.Error("error updating link time in repo", "error", err)
+			return err
 		}
 	}
 	return nil
@@ -84,7 +94,7 @@ func (s *Scheduler) updateLinks(chat domain.Chat) error {
 func (s *Scheduler) StartScheduler() error {
 	j, err := s.NewJob(
 		gocron.DurationJob(
-			100*time.Second,
+			30*time.Second,
 		),
 		gocron.NewTask(s.updateUsers),
 	)

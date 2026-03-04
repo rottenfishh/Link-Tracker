@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"strconv"
 
@@ -62,64 +63,62 @@ func (a *App) RunService(ctx *context.Context) {
 				slog.Info("Telegram Update channel closed")
 				continue
 			}
-			a.processTgUpdate(ctx, update)
+			err := a.processTgUpdate(ctx, update)
+			if err != nil {
+				slog.Error("Error processing telegram update", "error", err)
+			}
 		case linkUpdate, ok := <-linkUpdates:
 			if !ok {
 				linkUpdates = nil
 				slog.Info("Link Update channel closed")
 				continue
 			}
-			a.processLinkUpdate(ctx, linkUpdate)
+			err := a.processLinkUpdate(ctx, linkUpdate)
+			if err != nil {
+				slog.Error("Error processing link update", "error", err)
+			}
 		}
 		if tgUpdates == nil && linkUpdates == nil {
+			slog.Info("Telegram Updates and link updates channels closed")
 			break
-		}
-	}
-	for update := range tgUpdates {
-		if update.Message == nil {
-			continue
-		}
-
-		serverResponse, err := a.dispatcher.Dispatch(ctx, update.Message.Text, update.Message.Chat.ID)
-		if err != nil {
-
-			slog.Error("Dispatching error", "err", err)
-		}
-
-		err = a.adapter.SendMessage(update, serverResponse)
-		if err != nil {
-			slog.Error("TG API sending message error", "err", err)
 		}
 	}
 }
 
-func (a *App) processTgUpdate(ctx *context.Context, update tgbotapi.Update) {
+func (a *App) processTgUpdate(ctx *context.Context, update tgbotapi.Update) error {
 	if update.Message == nil {
-		return
+		return fmt.Errorf("telegram update message is nil")
 	}
 
 	serverResponse, err := a.dispatcher.Dispatch(ctx, update.Message.Text, update.Message.Chat.ID)
 	if err != nil {
-		slog.Error("Dispatching error", "err", err)
-		return
+		return fmt.Errorf("Dispatching error", "err", err)
 	}
 
-	err = a.adapter.SendMessage(update, serverResponse)
+	err = a.adapter.SendMessage(update.Message.Chat.ID, serverResponse)
 	if err != nil {
-		slog.Error("TG API sending message error", "err", err)
-		return
+		return fmt.Errorf("TG API sending message error", "err", err)
 	}
+	return nil
 }
 
-func (a *App) processLinkUpdate(ctx *context.Context, update domain.LinkUpdate) {
-
+func (a *App) processLinkUpdate(ctx *context.Context, update domain.LinkUpdate) error {
+	newMsg := application.NewMessage("Update for link " + update.Url + " new event: " + update.Description)
+	for _, id := range update.TgChatIds {
+		err := a.adapter.SendMessage(id, newMsg)
+		if err != nil {
+			return fmt.Errorf("error sending message to telegram user %d. error: %v", id, err)
+		}
+	}
+	return nil
 }
+
 func BuildDispatcher(scrapperCl infrastructure.ScrapperClient) *application.Dispatcher {
 	help := &commands.HelpCommand{}
 	start := &commands.StartCommand{}
 	fallback := &commands.FallBackCommand{}
 	track := &commands.TrackCommand{ScrapperClient: scrapperCl}
-	untrack := &commands.UntrackCommand{}
+	untrack := &commands.UntrackCommand{ScrapperClient: scrapperCl}
 	list := &commands.ListCommand{}
 	cancel := &commands.CancelCommand{}
 

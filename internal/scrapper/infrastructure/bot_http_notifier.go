@@ -26,7 +26,7 @@ func (n *BotHttpNotifier) SendUpdate(update domain.LinkUpdate) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", n.url, bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", n.url+"/updates", bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}

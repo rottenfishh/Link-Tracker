@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure"
@@ -52,6 +53,7 @@ func (cmd *TrackCommand) Execute(ctx *context.Context, state *application.State)
 
 		err := cmd.ScrapperClient.RegisterLink(state.ChatId, req)
 		if err != nil {
+			slog.Error("Registering link error ", "link", link, "error", err)
 			return application.NewCommandResult(true, "Не удалось начать отслеживать ссылку "+link), err
 		}
 

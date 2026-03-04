@@ -68,6 +68,7 @@ func (c *GithubClient) GetUpdates(link string) (*domain.Update, error) {
 		return nil, err
 	}
 	update := domain.NewUpdate(timeModified, "Update from github link "+link)
+	slog.Info("github update: ", update)
 	return update, nil
 }
 
@@ -76,7 +77,7 @@ func parseTime(tm string) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("no last-modified date found")
 	}
 
-	const layout = "01/01 Mon, 2 Jan 2006 15:04:05 MST"
+	const layout = "Mon, 01 Jan 2006 15:04:05 MST"
 	timeModified, err := time.Parse(layout, tm)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("error parsing time from last modified header github api %v", err)

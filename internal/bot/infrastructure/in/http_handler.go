@@ -1,6 +1,7 @@
 package in
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,9 +16,11 @@ type HttpHandler struct {
 func (h *HttpHandler) UpdateFromLink(c *gin.Context) {
 	var update domain.LinkUpdate
 	if err := c.BindJSON(&update); err != nil {
+		slog.Error("receiving update error ", "error: ", err.Error())
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 	// update users
+	slog.Info("received update in bot: ", update)
 	h.Updates <- update
 	c.IndentedJSON(http.StatusOK, update)
 }

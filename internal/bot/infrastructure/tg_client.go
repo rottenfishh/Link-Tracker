@@ -46,8 +46,8 @@ func SetUpTgCommands(bot *tgbotapi.BotAPI) {
 }
 
 // TODO: different message type? (i.e. photo)
-func (a *TgClient) SendMessage(update tgbotapi.Update, message *application.Message) error {
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, message.Text)
+func (a *TgClient) SendMessage(chatID int64, message *application.Message) error {
+	msg := tgbotapi.NewMessage(chatID, message.Text)
 	_, err := a.Bot.Send(msg)
 	if err != nil {
 		return err
