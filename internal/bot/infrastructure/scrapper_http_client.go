@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/dto"
 )
 
@@ -77,8 +79,23 @@ func (c *ScrapperHttpClient) RegisterLink(chatID int64, request dto.AddLinkReque
 	}
 
 	defer do.Body.Close()
+
 	if do.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", do.StatusCode)
+		var errResp dto.ApiErrorResponse
+		err := json.NewDecoder(do.Body).Decode(&errResp)
+		if err != nil {
+			slog.Error("Unexpected error response", err)
+		}
+		slog.Error("Error with code", "code", do.StatusCode, "Error Response", errResp)
+
+		switch do.StatusCode {
+		case 400:
+			return domain.ErrInvalidRequest
+		case 404:
+			return domain.ErrNotFound
+		case 409:
+			return domain.ErrLinkAlreadyTracked
+		}
 	}
 	return nil
 }
@@ -103,7 +120,12 @@ func (c *ScrapperHttpClient) DeleteLink(chatID int64, link dto.DeleteLinkRequest
 
 	defer do.Body.Close()
 	if do.StatusCode != http.StatusOK {
-
+		switch do.StatusCode {
+		case 400:
+			return domain.ErrInvalidRequest
+		case 404:
+			return domain.ErrNotFound
+		}
 		return fmt.Errorf("unexpected status code: %d", do.StatusCode)
 	}
 	return nil
@@ -125,6 +147,12 @@ func (c *ScrapperHttpClient) GetLinks(chatID int64) ([]dto.LinkResponse, error) 
 	defer do.Body.Close()
 
 	if do.StatusCode != http.StatusOK {
+		switch do.StatusCode {
+		case 400:
+			return nil, domain.ErrInvalidRequest
+		case 404:
+			return nil, domain.ErrNotFound
+		}
 		return nil, fmt.Errorf("unexpected status code: %d", do.StatusCode)
 	}
 

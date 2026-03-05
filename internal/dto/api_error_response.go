@@ -20,7 +20,7 @@ func NewRequestParsingError(err error) ApiErrorResponse {
 		http.StatusInternalServerError, "Request error", err.Error(), nil)
 }
 
-func NewRepositoryError(desc string, err error) ApiErrorResponse {
+func NewServiceError(desc string, err error, code int) ApiErrorResponse {
 	return NewApiErrorResponse(desc,
-		http.StatusInternalServerError, "Repository error", err.Error(), nil)
+		code, "Service error", err.Error(), nil)
 }

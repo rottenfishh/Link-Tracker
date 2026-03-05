@@ -6,11 +6,10 @@ import (
 	"strings"
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure"
 )
 
 type ListCommand struct {
-	ScrapperCLient infrastructure.ScrapperClient
+	ScrapperService *application.ScrapperService
 }
 
 func (cmd *ListCommand) Name() string {
@@ -22,7 +21,7 @@ func (cmd *ListCommand) Description() string {
 }
 
 func (cmd *ListCommand) Execute(ctx *context.Context, state *application.State) (*application.CommandResult, error) {
-	list, err := cmd.ScrapperCLient.GetLinks(state.ChatId)
+	list, err := cmd.ScrapperService.GetLinks(state.ChatId)
 	if err != nil {
 		slog.Error("Error getting links for chat", "id", state.ChatId)
 		return application.NewCommandResult(true, "Не удалось получить ссылки"), nil

@@ -1,11 +1,13 @@
 package in
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/dto"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/application"
 )
@@ -31,7 +33,9 @@ func (h *HttpHandler) RegisterChat(c *gin.Context) {
 
 	chat, err := h.service.RegisterChat(idInt)
 	if err != nil {
-		errResp := dto.NewRepositoryError("Error saving chat", err)
+		code := parseServerCode(err)
+		message := "Error saving chat"
+		errResp := dto.NewServiceError(message, err, code)
 		c.IndentedJSON(http.StatusInternalServerError, errResp)
 	}
 
@@ -49,7 +53,9 @@ func (h *HttpHandler) DeleteChat(c *gin.Context) {
 
 	err = h.service.DeleteChat(idInt)
 	if err != nil {
-		errResp := dto.NewRepositoryError("Error deleting chat", err)
+		code := parseServerCode(err)
+		message := "Error deleting chat"
+		errResp := dto.NewServiceError(message, err, code)
 		c.JSON(http.StatusInternalServerError, errResp)
 	}
 	c.IndentedJSON(http.StatusOK, gin.H{"id": id})
@@ -67,7 +73,9 @@ func (h *HttpHandler) GetLinksByChatId(c *gin.Context) {
 
 	links, err := h.service.GetLinksByChatId(idInt)
 	if err != nil {
-		errResp := dto.NewRepositoryError("Error getting links", err)
+		code := parseServerCode(err)
+		message := "Error getting links"
+		errResp := dto.NewServiceError(message, err, code)
 		c.JSON(http.StatusInternalServerError, errResp)
 		return
 	}
@@ -98,8 +106,10 @@ func (h *HttpHandler) AddLink(c *gin.Context) {
 
 	addedLink, err := h.service.AddLink(idInt, link)
 	if err != nil {
-		errResp := dto.NewRepositoryError("Error adding link", err)
-		c.JSON(http.StatusInternalServerError, errResp)
+		code := parseServerCode(err)
+		message := "Error tracking link"
+		errResp := dto.NewServiceError(message, err, code)
+		c.JSON(code, errResp)
 		return
 	}
 	linkResp := dto.ToLinkResponse(*addedLink)
@@ -126,7 +136,9 @@ func (h *HttpHandler) DeleteLink(c *gin.Context) {
 
 	err = h.service.DeleteLink(idInt, link)
 	if err != nil {
-		errResp := dto.NewRepositoryError("Error deleting link", err)
+		code := parseServerCode(err)
+		message := "Error deleting link"
+		errResp := dto.NewServiceError(message, err, code)
 		c.JSON(http.StatusInternalServerError, errResp)
 		return
 	}
@@ -142,4 +154,19 @@ func parseId(id string) (int64, error) {
 		return 0, fmt.Errorf("invalid id format. should be number")
 	}
 	return idInt, nil
+}
+
+func parseServerCode(err error) int {
+	var code int
+	switch {
+	case errors.Is(err, domain.ErrNotFound):
+		code = http.StatusNotFound
+	case errors.Is(err, domain.ErrLinkAlreadyTracked):
+		code = http.StatusConflict
+	case errors.Is(err, domain.ErrInvalidRequest):
+		code = http.StatusBadRequest
+	default:
+		code = http.StatusInternalServerError
+	}
+	return code
 }

@@ -56,6 +56,7 @@ func (r *Dispatcher) Dispatch(ctx *context.Context, userMessage string, chatId i
 
 	answerMsg, err := cmd.Execute(ctx, state)
 	if err != nil {
+		slog.Error("Command executing", "error", err.Error())
 		return nil, err
 	}
 

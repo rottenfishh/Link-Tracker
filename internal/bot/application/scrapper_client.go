@@ -1,7 +1,8 @@
-package infrastructure
+package application
 
 import "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/dto"
 
+// TODO: не понимаю как все устроить чтобы было чисто архитектурно
 type ScrapperClient interface {
 	RegisterChat(chatID int64) error
 	DeleteChat(chatID int64) error
