@@ -3,7 +3,7 @@ package infrastructure
 import (
 	"log/slog"
 
-	tgbotapi "github.com/go-telegram-bot-docs/telegram-bot-docs/v5"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
 )
 
