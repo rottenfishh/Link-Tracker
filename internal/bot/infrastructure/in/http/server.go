@@ -1,8 +1,9 @@
-package in
+package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
 )
 
 type Server struct {
@@ -11,10 +12,10 @@ type Server struct {
 	url     string
 }
 
-func NewServer(url string) *Server {
+func NewServer(url string, publisher *application.UpdatePublisher) *Server {
 	router := gin.Default()
 	updChan := make(chan domain.LinkUpdate)
-	handler := HttpHandler{updChan}
+	handler := NewHttpHandler(publisher)
 	registerRoutes(router, handler)
 	return &Server{
 		Updates: updChan,
@@ -23,7 +24,7 @@ func NewServer(url string) *Server {
 	}
 }
 
-func registerRoutes(router *gin.Engine, handler HttpHandler) {
+func registerRoutes(router *gin.Engine, handler *HttpHandler) {
 	router.POST("/updates", handler.UpdateFromLink)
 }
 

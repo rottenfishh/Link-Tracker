@@ -5,14 +5,13 @@ import (
 	"log/slog"
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/application"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure/in"
+	http2 "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure/in/http"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure/out"
 )
 
 type App struct {
 	scheduler *application.Scheduler
-	server    *in.Server
+	server    *http2.Server
 	config    ScrapperAppConfig
 }
 
@@ -25,7 +24,7 @@ func NewApp() (*App, error) {
 	repo := out.NewInMemoryRepo()
 	service := application.NewChatService(repo)
 
-	router := in.NewServer(":"+config.Port, service)
+	router := http2.NewServer(":"+config.Port, service)
 
 	scheduler, err := buildScheduler(*config, service)
 	if err != nil {
@@ -52,7 +51,7 @@ func (a *App) Run() error {
 func buildScheduler(config ScrapperAppConfig, service *application.ChatService) (*application.Scheduler, error) {
 	github := application.NewGithubClient(config.GithubToken)
 	stackOF := application.NewStackOverflowClient(config.StackOFToken)
-	notifier := infrastructure.NewBotHttpNotifier(config.BotUrl)
+	notifier := out.NewBotHttpNotifier(config.BotUrl)
 
 	scheduler, err := application.NewScheduler(notifier, service)
 	if err != nil {

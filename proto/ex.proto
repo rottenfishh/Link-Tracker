@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "proto/;user";
+
+service UserService {
+  rpc CreateUser (CreateUserRequest) returns (UserResponse);
+  rpc GetUser (GetUserRequest) returns (UserResponse);
+  rpc ListUsers (Empty) returns (UserList);
+}
+
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+}
+
+message CreateUserRequest {
+  string name = 1;
+  string email = 2;
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message UserResponse {
+  User user = 1;
+}
+
+message UserList {
+  repeated User users = 1;
+}
+
+message Empty {}

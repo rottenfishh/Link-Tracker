@@ -1,7 +1,7 @@
 package out
 
 import (
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
 )
 
 type InMemoryRepo struct {
@@ -73,15 +73,17 @@ func (r *InMemoryRepo) UpdateLink(chatId int64, link domain.Link) (*domain.Link,
 }
 
 // TODO: create func
-func (r *InMemoryRepo) DeleteLink(chatId int64, linkName string) error {
+func (r *InMemoryRepo) DeleteLink(chatId int64, linkName string) (*domain.Link, error) {
 	_, ok := r.Chats[chatId]
 	if !ok {
-		return domain.ErrNotFound
+		return nil, domain.ErrNotFound
 	}
 	var idx int
+	var linkDeleted domain.Link
 	for index, link := range r.Chats[chatId].Links {
 		if link.Link == linkName {
 			idx = index
+			linkDeleted = link
 			break
 		}
 	}
@@ -93,7 +95,7 @@ func (r *InMemoryRepo) DeleteLink(chatId int64, linkName string) error {
 		}
 	}
 	r.Subscribers[linkName] = append(r.Subscribers[linkName][:idx], r.Subscribers[linkName][idx+1:]...)
-	return nil
+	return &linkDeleted, nil
 }
 
 func (r *InMemoryRepo) GetChatsByLink(link string) ([]int64, error) {

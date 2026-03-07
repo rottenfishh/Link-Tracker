@@ -6,18 +6,19 @@ import (
 	"log/slog"
 	"strconv"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tgbotapi "github.com/go-telegram-bot-docs/telegram-bot-docs/v5"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/commands"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/in"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/in/http"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/out"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
 )
 
 type App struct {
 	dispatcher *application.Dispatcher
 	adapter    *infrastructure.TgClient
-	server     *in.Server
+	server     *http.Server
 	config     AppConfig
 }
 
@@ -30,7 +31,7 @@ func NewApp() *App {
 		return nil
 	}
 
-	scrapper := infrastructure.NewScrapperClient(cfg.ScrapperUrl)
+	scrapper := out.NewScrapperClient(cfg.ScrapperUrl)
 	scrapperService := application.NewScrapperService(scrapper)
 
 	dispatcher := BuildDispatcher(scrapperService)
@@ -38,7 +39,8 @@ func NewApp() *App {
 
 	slog.Info("Finished setting up service")
 
-	router := in.NewServer(":" + strconv.Itoa(cfg.Port))
+	publisher := application.NewUpdatePublisher()
+	router := http.NewServer(":"+strconv.Itoa(cfg.Port), publisher)
 
 	return &App{dispatcher, adapter, router, *cfg}
 }

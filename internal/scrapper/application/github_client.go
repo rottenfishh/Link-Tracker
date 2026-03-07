@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
 )
 
 type GithubClient struct {
@@ -80,7 +80,7 @@ func parseTime(tm string) (time.Time, error) {
 	const layout = "Mon, 01 Jan 2006 15:04:05 MST"
 	timeModified, err := time.Parse(layout, tm)
 	if err != nil {
-		return time.Time{}, fmt.Errorf("error parsing time from last modified header github api %v", err)
+		return time.Time{}, fmt.Errorf("error parsing time from last modified header github docs %v", err)
 	}
 
 	return timeModified, nil

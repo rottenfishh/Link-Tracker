@@ -1,4 +1,4 @@
-package infrastructure
+package out
 
 import (
 	"bytes"
@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/dto"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
+	dto2 "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/dto"
 )
 
 type ScrapperHttpClient struct {
@@ -34,7 +34,7 @@ func (c *ScrapperHttpClient) RegisterChat(chatID int64) error {
 		return err
 	}
 	defer resp.Body.Close()
-	// TODO: log api error reponse
+	// TODO: log docs error reponse
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
@@ -60,7 +60,7 @@ func (c *ScrapperHttpClient) DeleteChat(chatID int64) error {
 	return nil
 }
 
-func (c *ScrapperHttpClient) RegisterLink(chatID int64, request dto.AddLinkRequest) error {
+func (c *ScrapperHttpClient) RegisterLink(chatID int64, request dto2.AddLinkRequest) error {
 	urlPath := c.url + "/links/" + strconv.FormatInt(chatID, 10)
 
 	body, err := json.Marshal(request)
@@ -81,7 +81,7 @@ func (c *ScrapperHttpClient) RegisterLink(chatID int64, request dto.AddLinkReque
 	defer do.Body.Close()
 
 	if do.StatusCode != http.StatusOK {
-		var errResp dto.ApiErrorResponse
+		var errResp dto2.ApiErrorResponse
 		err := json.NewDecoder(do.Body).Decode(&errResp)
 		if err != nil {
 			slog.Error("Unexpected error response", err)
@@ -100,7 +100,7 @@ func (c *ScrapperHttpClient) RegisterLink(chatID int64, request dto.AddLinkReque
 	return nil
 }
 
-func (c *ScrapperHttpClient) DeleteLink(chatID int64, link dto.DeleteLinkRequest) error {
+func (c *ScrapperHttpClient) DeleteLink(chatID int64, link dto2.DeleteLinkRequest) error {
 	urlPath := c.url + "/links/" + strconv.FormatInt(chatID, 10)
 
 	body, err := json.Marshal(link)
@@ -131,7 +131,7 @@ func (c *ScrapperHttpClient) DeleteLink(chatID int64, link dto.DeleteLinkRequest
 	return nil
 }
 
-func (c *ScrapperHttpClient) GetLinks(chatID int64) ([]dto.LinkResponse, error) {
+func (c *ScrapperHttpClient) GetLinks(chatID int64) ([]dto2.LinkResponse, error) {
 	urlPath := c.url + "/links/" + strconv.FormatInt(chatID, 10)
 
 	req, err := http.NewRequest("GET", urlPath, nil)
@@ -156,7 +156,7 @@ func (c *ScrapperHttpClient) GetLinks(chatID int64) ([]dto.LinkResponse, error) 
 		return nil, fmt.Errorf("unexpected status code: %d", do.StatusCode)
 	}
 
-	var links []dto.LinkResponse
+	var links []dto2.LinkResponse
 	if err := json.NewDecoder(do.Body).Decode(&links); err != nil {
 		return nil, err
 	}

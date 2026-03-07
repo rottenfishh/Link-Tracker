@@ -33,7 +33,7 @@ func (r *Dispatcher) GetCommands() map[string]Command {
 	return r.cmds
 }
 
-// TODO: use tg-bot-api built-in parser of commands
+// TODO: use tg-bot-docs built-in parser of commands
 func (r *Dispatcher) Dispatch(ctx *context.Context, userMessage string, chatId int64) (*Message, error) {
 	slog.Info(userMessage)
 

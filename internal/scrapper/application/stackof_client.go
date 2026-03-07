@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
 )
 
 // https://api.stackexchange.com/2.3/questions/54632086?order=desc&sort=activity&site=stackoverflow example

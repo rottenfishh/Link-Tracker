@@ -1,7 +1,7 @@
 package application
 
 import (
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/dto"
+	dto2 "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/dto"
 )
 
 type ScrapperService struct {
@@ -13,7 +13,7 @@ func NewScrapperService(scrapperCLient ScrapperClient) *ScrapperService {
 }
 
 func (s *ScrapperService) AddLink(chatID int64, link string, tags []string) error {
-	req := dto.AddLinkRequest{
+	req := dto2.AddLinkRequest{
 		Link: link,
 		Tags: tags,
 	}
@@ -25,7 +25,7 @@ func (s *ScrapperService) AddLink(chatID int64, link string, tags []string) erro
 }
 
 func (s *ScrapperService) DeleteLink(chatID int64, link string) error {
-	req := dto.DeleteLinkRequest{Link: link}
+	req := dto2.DeleteLinkRequest{Link: link}
 	err := s.scrapperClient.DeleteLink(chatID, req)
 	if err != nil {
 		return err
@@ -33,7 +33,7 @@ func (s *ScrapperService) DeleteLink(chatID int64, link string) error {
 	return nil
 }
 
-func (s *ScrapperService) GetLinks(chatID int64) ([]dto.LinkResponse, error) {
+func (s *ScrapperService) GetLinks(chatID int64) ([]dto2.LinkResponse, error) {
 	links, err := s.scrapperClient.GetLinks(chatID)
 	if err != nil {
 		return nil, err

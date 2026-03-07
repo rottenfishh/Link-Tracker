@@ -1,25 +1,26 @@
-package infrastructure
+package out
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
 
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
 )
 
-type BotHttpNotifier struct {
+type BotHttpClient struct {
 	client *http.Client
 	url    string
 }
 
-func NewBotHttpNotifier(url string) *BotHttpNotifier {
-	return &BotHttpNotifier{http.DefaultClient, url}
+func NewBotHttpNotifier(url string) *BotHttpClient {
+	return &BotHttpClient{http.DefaultClient, url}
 }
 
 // TODO: return response
-func (n *BotHttpNotifier) SendUpdate(update domain.LinkUpdate) error {
+func (n *BotHttpClient) SendUpdate(ctx context.Context, update domain.LinkUpdate) error {
 	slog.Info("Sending update ", "chat ", update.TgChatIds, " url ", update.Url)
 	body, err := json.Marshal(update)
 	if err != nil {

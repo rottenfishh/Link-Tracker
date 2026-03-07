@@ -1,8 +1,8 @@
 package application
 
 import (
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/dto"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/dto"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure/out"
 )
 
@@ -53,12 +53,12 @@ func (s *ChatService) AddLink(chatId int64, req dto.AddLinkRequest) (*domain.Lin
 	return addedLink, nil
 }
 
-func (s *ChatService) DeleteLink(chatId int64, req dto.DeleteLinkRequest) error {
-	err := s.repo.DeleteLink(chatId, req.Link)
+func (s *ChatService) DeleteLink(chatId int64, req dto.DeleteLinkRequest) (*domain.Link, error) {
+	link, err := s.repo.DeleteLink(chatId, req.Link)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return link, nil
 }
 
 func (s *ChatService) UpdateLink(chatId int64, link domain.Link) (*domain.Link, error) {

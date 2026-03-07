@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure"
+	domain2 "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure/out"
 )
 
 // TODO: fix this. interface for updaters
@@ -16,11 +16,11 @@ import (
 type Scheduler struct {
 	gocron.Scheduler
 	service  *ChatService
-	notifier infrastructure.Notifier
+	notifier out.Notifier
 	updaters map[string]LinkUpdater
 }
 
-func NewScheduler(notifier infrastructure.Notifier, service *ChatService) (*Scheduler, error) {
+func NewScheduler(notifier out.Notifier, service *ChatService) (*Scheduler, error) {
 	s, err := gocron.NewScheduler()
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (s *Scheduler) updateUsers() error {
 }
 
 // TODO: save new time for link in repo properly
-func (s *Scheduler) updateLinks(chat domain.Chat) error {
+func (s *Scheduler) updateLinks(chat domain2.Chat) error {
 	for _, link := range chat.Links {
 		tracker := s.updaters[link.Domain]
 		if tracker == nil {
@@ -74,7 +74,7 @@ func (s *Scheduler) updateLinks(chat domain.Chat) error {
 			slog.Info("KILL MYSELF")
 			slog.Info("Updating ", link.Link, "time", link.LastModified, " to ", update.LastModified)
 			chats := []int64{chat.Id}
-			upd := domain.NewLinkUpdate(1, link.Link, "New event from given link", chats)
+			upd := domain2.NewLinkUpdate(1, link.Link, "New event from given link", chats)
 			err = s.notifier.SendUpdate(*upd)
 			if err != nil {
 				slog.Error("error sending update to bot", "error", err)

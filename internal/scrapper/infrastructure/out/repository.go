@@ -1,7 +1,7 @@
 package out
 
 import (
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
 )
 
 // TODO: обобщить интерфейс? я не могу придумать, как сделать его общим
@@ -13,7 +13,7 @@ type ChatRepository interface {
 	GetLinksById(chatId int64) ([]domain.Link, error)
 	AddLink(chatId int64, link domain.Link) (*domain.Link, error)
 	UpdateLink(chatId int64, link domain.Link) (*domain.Link, error)
-	DeleteLink(chatId int64, linkName string) error
+	DeleteLink(chatId int64, linkName string) (*domain.Link, error)
 	GetChatsByLink(link string) ([]int64, error)
 }
 

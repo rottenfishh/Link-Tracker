@@ -1,4 +1,4 @@
-package in
+package http
 
 import (
 	"errors"
@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/dto"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
+	dto2 "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/dto"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/application"
 )
 
@@ -27,7 +27,7 @@ func (h *HttpHandler) RegisterChat(c *gin.Context) {
 
 	idInt, err := parseId(id)
 	if err != nil {
-		errResp := dto.NewRequestParsingError(err)
+		errResp := dto2.NewRequestParsingError(err)
 		c.JSON(http.StatusBadRequest, errResp)
 	}
 
@@ -35,7 +35,7 @@ func (h *HttpHandler) RegisterChat(c *gin.Context) {
 	if err != nil {
 		code := parseServerCode(err)
 		message := "Error saving chat"
-		errResp := dto.NewServiceError(message, err, code)
+		errResp := dto2.NewServiceError(message, err, code)
 		c.IndentedJSON(http.StatusInternalServerError, errResp)
 	}
 
@@ -47,7 +47,7 @@ func (h *HttpHandler) DeleteChat(c *gin.Context) {
 
 	idInt, err := parseId(id)
 	if err != nil {
-		errResp := dto.NewRequestParsingError(err)
+		errResp := dto2.NewRequestParsingError(err)
 		c.JSON(http.StatusBadRequest, errResp)
 	}
 
@@ -55,7 +55,7 @@ func (h *HttpHandler) DeleteChat(c *gin.Context) {
 	if err != nil {
 		code := parseServerCode(err)
 		message := "Error deleting chat"
-		errResp := dto.NewServiceError(message, err, code)
+		errResp := dto2.NewServiceError(message, err, code)
 		c.JSON(http.StatusInternalServerError, errResp)
 	}
 	c.IndentedJSON(http.StatusOK, gin.H{"id": id})
@@ -66,7 +66,7 @@ func (h *HttpHandler) GetLinksByChatId(c *gin.Context) {
 
 	idInt, err := parseId(id)
 	if err != nil {
-		errResp := dto.NewRequestParsingError(err)
+		errResp := dto2.NewRequestParsingError(err)
 		c.JSON(http.StatusBadRequest, errResp)
 		return
 	}
@@ -75,14 +75,14 @@ func (h *HttpHandler) GetLinksByChatId(c *gin.Context) {
 	if err != nil {
 		code := parseServerCode(err)
 		message := "Error getting links"
-		errResp := dto.NewServiceError(message, err, code)
+		errResp := dto2.NewServiceError(message, err, code)
 		c.JSON(http.StatusInternalServerError, errResp)
 		return
 	}
 
-	linkResp := make([]dto.LinkResponse, len(links))
+	linkResp := make([]dto2.LinkResponse, len(links))
 	for _, link := range links {
-		linkResp = append(linkResp, *dto.ToLinkResponse(link))
+		linkResp = append(linkResp, *dto2.ToLinkResponse(link))
 	}
 
 	c.IndentedJSON(http.StatusOK, linkResp)
@@ -93,13 +93,13 @@ func (h *HttpHandler) AddLink(c *gin.Context) {
 
 	idInt, err := parseId(id)
 	if err != nil {
-		errResp := dto.NewRequestParsingError(err)
+		errResp := dto2.NewRequestParsingError(err)
 		c.JSON(http.StatusBadRequest, errResp)
 		return
 	}
-	var link dto.AddLinkRequest
+	var link dto2.AddLinkRequest
 	if err := c.BindJSON(&link); err != nil {
-		errResp := dto.NewRequestParsingError(err)
+		errResp := dto2.NewRequestParsingError(err)
 		c.JSON(http.StatusBadRequest, errResp)
 		return
 	}
@@ -108,11 +108,11 @@ func (h *HttpHandler) AddLink(c *gin.Context) {
 	if err != nil {
 		code := parseServerCode(err)
 		message := "Error tracking link"
-		errResp := dto.NewServiceError(message, err, code)
+		errResp := dto2.NewServiceError(message, err, code)
 		c.JSON(code, errResp)
 		return
 	}
-	linkResp := dto.ToLinkResponse(*addedLink)
+	linkResp := dto2.ToLinkResponse(*addedLink)
 
 	c.IndentedJSON(http.StatusOK, linkResp)
 }
@@ -122,14 +122,14 @@ func (h *HttpHandler) DeleteLink(c *gin.Context) {
 
 	idInt, err := parseId(id)
 	if err != nil {
-		errResp := dto.NewRequestParsingError(err)
+		errResp := dto2.NewRequestParsingError(err)
 		c.JSON(http.StatusBadRequest, errResp)
 		return
 	}
 
-	var link dto.DeleteLinkRequest
+	var link dto2.DeleteLinkRequest
 	if err := c.BindJSON(&link); err != nil {
-		errResp := dto.NewRequestParsingError(err)
+		errResp := dto2.NewRequestParsingError(err)
 		c.JSON(http.StatusBadRequest, errResp)
 		return
 	}
@@ -138,7 +138,7 @@ func (h *HttpHandler) DeleteLink(c *gin.Context) {
 	if err != nil {
 		code := parseServerCode(err)
 		message := "Error deleting link"
-		errResp := dto.NewServiceError(message, err, code)
+		errResp := dto2.NewServiceError(message, err, code)
 		c.JSON(http.StatusInternalServerError, errResp)
 		return
 	}

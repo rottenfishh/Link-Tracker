@@ -1,6 +1,8 @@
 package dto
 
-import "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/domain"
+import (
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
+)
 
 type LinkResponse struct {
 	Id      int64    `json:"id"`
