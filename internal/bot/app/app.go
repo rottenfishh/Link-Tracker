@@ -117,7 +117,7 @@ func (a *App) processLinkUpdate(ctx *context.Context, update domain.LinkUpdate) 
 
 func BuildDispatcher(scrapperService *application.ScrapperService) *application.Dispatcher {
 	help := &commands.HelpCommand{}
-	start := &commands.StartCommand{}
+	start := &commands.StartCommand{ScrapperService: scrapperService}
 	fallback := &commands.FallBackCommand{}
 	track := &commands.TrackCommand{ScrapperService: scrapperService}
 	untrack := &commands.UntrackCommand{ScrapperService: scrapperService}

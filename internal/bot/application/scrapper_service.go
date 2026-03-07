@@ -40,3 +40,19 @@ func (s *ScrapperService) GetLinks(chatID int64) ([]dto.LinkResponse, error) {
 	}
 	return links, nil
 }
+
+func (s *ScrapperService) RegisterChat(chatID int64) error {
+	err := s.scrapperClient.RegisterChat(chatID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ScrapperService) DeleteChat(chatID int64) error {
+	err := s.scrapperClient.DeleteChat(chatID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
