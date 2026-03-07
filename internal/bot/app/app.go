@@ -8,6 +8,7 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/adapter/in"
+	grpc "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/adapter/in/grpc"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/adapter/in/http"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/adapter/out"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/service"
@@ -19,6 +20,7 @@ type App struct {
 	dispatcher *service.Dispatcher
 	adapter    *in.TgClient
 	server     *http.Server
+	grpcServer *grpc.BotServer
 	config     AppConfig
 }
 
@@ -40,24 +42,23 @@ func NewApp() *App {
 	slog.Info("Finished setting up service")
 
 	publisher := service.NewUpdatePublisher()
-	router := http.NewServer(":"+strconv.Itoa(cfg.Port), publisher)
+	grpcServer := grpc.NewBotServiceServer(publisher)
+	//router := http.NewServer(":"+strconv.Itoa(cfg.Port), publisher)
 
-	return &App{dispatcher, adapter, router, *cfg}
+	return &App{dispatcher: dispatcher, adapter: adapter, config: *cfg, grpcServer: grpcServer}
 }
 
-// TODO: FAN-IN pattern for accepting events from both tg and http channels
-// TODO: idk how to do this
 func (a *App) RunService(ctx context.Context) {
 	slog.Info("Starting service. Accepting user messages")
 
 	go func() {
-		err := a.server.Run()
+		err := a.grpcServer.RunServer("8088", strconv.Itoa(a.config.Port))
 		if err != nil {
 			slog.Error("Error starting http server", "error", err)
 		}
 	}()
 
-	linkUpdates := a.server.GetUpdates()
+	linkUpdates := a.grpcServer.GetUpdates()
 	tgUpdates := a.adapter.GetUpdates()
 	for {
 		select {

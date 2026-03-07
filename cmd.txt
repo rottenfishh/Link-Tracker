@@ -1,0 +1,3 @@
+protoc -I ./proto  --go_out ./pkg/proto/bot --go_opt paths=source_relative  --go-grpc_out ./pkg/proto/bot --go-grpc_opt paths=source_relative   --grpc-gateway_out ./pkg/proto/bot --grpc-gateway_opt paths=source_relative  ./proto/bot_service.proto
+
+protoc -I ./proto  --go_out ./pkg/proto/scrapper --go_opt paths=source_relative  --go-grpc_out ./pkg/proto/scrapper  --go-grpc_opt paths=source_relative   --grpc-gateway_out ./pkg/proto/scrapper  --grpc-gateway_opt paths=source_relative  ./proto/scrapper_service.proto

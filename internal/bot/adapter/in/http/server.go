@@ -7,20 +7,19 @@ import (
 )
 
 type Server struct {
-	Updates chan model.LinkUpdate
-	router  *gin.Engine
-	url     string
+	router    *gin.Engine
+	publisher *service.UpdatePublisher
+	url       string
 }
 
 func NewServer(url string, publisher *service.UpdatePublisher) *Server {
 	router := gin.Default()
-	updChan := make(chan model.LinkUpdate)
 	handler := NewHttpHandler(publisher)
 	registerRoutes(router, handler)
 	return &Server{
-		Updates: updChan,
-		router:  router,
-		url:     url,
+		router:    router,
+		url:       url,
+		publisher: publisher,
 	}
 }
 
@@ -29,7 +28,7 @@ func registerRoutes(router *gin.Engine, handler *HttpHandler) {
 }
 
 func (server *Server) GetUpdates() chan model.LinkUpdate {
-	return server.Updates
+	return server.publisher.GetUpdates()
 }
 
 func (server *Server) Run() error {

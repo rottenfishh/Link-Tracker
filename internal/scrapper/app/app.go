@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"log/slog"
 
-	http2 "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/in/http"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/in/grpc"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/in/http"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/service"
 )
 
 type App struct {
-	scheduler *service.Scheduler
-	server    *http2.Server
-	config    ScrapperAppConfig
+	scheduler  *service.Scheduler
+	server     *http.Server
+	grpcServer *grpc.ScrapperServer
+	config     ScrapperAppConfig
 }
 
 func NewApp() (*App, error) {
@@ -24,16 +26,17 @@ func NewApp() (*App, error) {
 	repo := out.NewInMemoryRepo()
 	chatService := service.NewChatService(repo)
 
-	router := http2.NewServer(":"+config.Port, chatService)
-
+	//router := http.NewServer(":"+config.Port, chatService)
+	grpcServer := grpc.NewScrapperServer(chatService)
 	scheduler, err := buildScheduler(*config, chatService)
 	if err != nil {
 		return nil, fmt.Errorf("error while building scheduler %v", err)
 	}
 
-	return &App{scheduler, router, *config}, nil
+	return &App{scheduler: scheduler, grpcServer: grpcServer, config: *config}, nil
 }
 
+// TODO: add gateway port
 func (a *App) Run() error {
 	err := a.scheduler.StartScheduler()
 	if err != nil {
@@ -41,7 +44,7 @@ func (a *App) Run() error {
 	}
 
 	slog.Info("Starting scrapper service at port " + a.config.Port)
-	err = a.server.Run()
+	err = a.grpcServer.RunServer("8089", a.config.Port)
 	if err != nil {
 		return fmt.Errorf("error starting router %v", err)
 	}
