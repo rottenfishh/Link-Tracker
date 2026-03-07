@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package bot;
 
-option go_package = "proto/bot";
+option go_package = "pkg/proto/bot";
 
 service BotService {
   rpc SendUpdate(LinkUpdate) returns (UpdateResponse);

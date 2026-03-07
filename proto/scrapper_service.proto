@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package scrapper;
 
-option go_package = "proto/scrapper";
+option go_package = "pkg/proto/scrapper";
 
 service ScrapperService {
   rpc RegisterChat(ChatID) returns (ChatResponse);

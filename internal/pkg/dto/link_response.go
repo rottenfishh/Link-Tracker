@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
 )
 
 type LinkResponse struct {
@@ -11,6 +11,6 @@ type LinkResponse struct {
 	Filters []string `json:"filters"`
 }
 
-func ToLinkResponse(link domain.Link) *LinkResponse {
+func ToLinkResponse(link model.Link) *LinkResponse {
 	return &LinkResponse{Id: link.Id, Link: link.Link, Tags: link.Tags}
 }

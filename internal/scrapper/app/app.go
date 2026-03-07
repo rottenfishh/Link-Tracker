@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"log/slog"
 
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/application"
-	http2 "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure/in/http"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure/out"
+	http2 "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/in/http"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/service"
 )
 
 type App struct {
-	scheduler *application.Scheduler
+	scheduler *service.Scheduler
 	server    *http2.Server
 	config    ScrapperAppConfig
 }
@@ -22,11 +22,11 @@ func NewApp() (*App, error) {
 	}
 
 	repo := out.NewInMemoryRepo()
-	service := application.NewChatService(repo)
+	chatService := service.NewChatService(repo)
 
-	router := http2.NewServer(":"+config.Port, service)
+	router := http2.NewServer(":"+config.Port, chatService)
 
-	scheduler, err := buildScheduler(*config, service)
+	scheduler, err := buildScheduler(*config, chatService)
 	if err != nil {
 		return nil, fmt.Errorf("error while building scheduler %v", err)
 	}
@@ -48,12 +48,12 @@ func (a *App) Run() error {
 	return nil
 }
 
-func buildScheduler(config ScrapperAppConfig, service *application.ChatService) (*application.Scheduler, error) {
-	github := application.NewGithubClient(config.GithubToken)
-	stackOF := application.NewStackOverflowClient(config.StackOFToken)
+func buildScheduler(config ScrapperAppConfig, chatService *service.ChatService) (*service.Scheduler, error) {
+	github := service.NewGithubClient(config.GithubToken)
+	stackOF := service.NewStackOverflowClient(config.StackOFToken)
 	notifier := out.NewBotHttpNotifier(config.BotUrl)
 
-	scheduler, err := application.NewScheduler(notifier, service)
+	scheduler, err := service.NewScheduler(notifier, chatService)
 	if err != nil {
 		return nil, fmt.Errorf("error while building scheduler %v", err)
 	}

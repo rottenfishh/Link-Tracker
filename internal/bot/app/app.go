@@ -6,18 +6,18 @@ import (
 	"log/slog"
 	"strconv"
 
-	tgbotapi "github.com/go-telegram-bot-docs/telegram-bot-docs/v5"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/commands"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/in/http"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/out"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/domain"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/adapter/in"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/adapter/in/http"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/adapter/out"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/service"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/service/commands"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
 )
 
 type App struct {
-	dispatcher *application.Dispatcher
-	adapter    *infrastructure.TgClient
+	dispatcher *service.Dispatcher
+	adapter    *in.TgClient
 	server     *http.Server
 	config     AppConfig
 }
@@ -32,14 +32,14 @@ func NewApp() *App {
 	}
 
 	scrapper := out.NewScrapperClient(cfg.ScrapperUrl)
-	scrapperService := application.NewScrapperService(scrapper)
+	scrapperService := service.NewScrapperService(scrapper)
 
 	dispatcher := BuildDispatcher(scrapperService)
-	adapter := infrastructure.NewTgAdapter(cfg.Telegram.Token, cfg.Telegram.Debug)
+	adapter := in.NewTgAdapter(cfg.Telegram.Token, cfg.Telegram.Debug)
 
 	slog.Info("Finished setting up service")
 
-	publisher := application.NewUpdatePublisher()
+	publisher := service.NewUpdatePublisher()
 	router := http.NewServer(":"+strconv.Itoa(cfg.Port), publisher)
 
 	return &App{dispatcher, adapter, router, *cfg}
@@ -47,7 +47,7 @@ func NewApp() *App {
 
 // TODO: FAN-IN pattern for accepting events from both tg and http channels
 // TODO: idk how to do this
-func (a *App) RunService(ctx *context.Context) {
+func (a *App) RunService(ctx context.Context) {
 	slog.Info("Starting service. Accepting user messages")
 
 	go func() {
@@ -89,7 +89,7 @@ func (a *App) RunService(ctx *context.Context) {
 	}
 }
 
-func (a *App) processTgUpdate(ctx *context.Context, update tgbotapi.Update) error {
+func (a *App) processTgUpdate(ctx context.Context, update tgbotapi.Update) error {
 	if update.Message == nil {
 		return fmt.Errorf("telegram update message is nil")
 	}
@@ -106,8 +106,8 @@ func (a *App) processTgUpdate(ctx *context.Context, update tgbotapi.Update) erro
 	return nil
 }
 
-func (a *App) processLinkUpdate(ctx *context.Context, update domain.LinkUpdate) error {
-	newMsg := application.NewMessage("Update for link " + update.Url + " new event: " + update.Description)
+func (a *App) processLinkUpdate(ctx context.Context, update model.LinkUpdate) error {
+	newMsg := service.NewMessage("Update for link " + update.Url + " new event: " + update.Description)
 	for _, id := range update.TgChatIds {
 		err := a.adapter.SendMessage(id, newMsg)
 		if err != nil {
@@ -117,7 +117,7 @@ func (a *App) processLinkUpdate(ctx *context.Context, update domain.LinkUpdate) 
 	return nil
 }
 
-func BuildDispatcher(scrapperService *application.ScrapperService) *application.Dispatcher {
+func BuildDispatcher(scrapperService *service.ScrapperService) *service.Dispatcher {
 	help := &commands.HelpCommand{}
 	start := &commands.StartCommand{ScrapperService: scrapperService}
 	fallback := &commands.FallBackCommand{}
@@ -126,9 +126,9 @@ func BuildDispatcher(scrapperService *application.ScrapperService) *application.
 	list := &commands.ListCommand{ScrapperService: scrapperService}
 	cancel := &commands.CancelCommand{}
 
-	cmds := []application.Command{help, start, fallback, track, untrack, list, cancel}
+	cmds := []service.Command{help, start, fallback, track, untrack, list, cancel}
 
-	d := application.NewDispatcher()
+	d := service.NewDispatcher()
 	for _, cmd := range cmds {
 		d.Register(cmd)
 	}
