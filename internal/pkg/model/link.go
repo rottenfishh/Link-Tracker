@@ -9,7 +9,7 @@ import (
 // TODO: extract model
 type Link struct {
 	Id           int64
-	Link         string    `json:"link"`
+	Link         string    `json:"url"`
 	Domain       string    `json:"model"`
 	Etag         string    `json:"etag,omitempty"`
 	LastModified time.Time `json:"last_modified"`

@@ -132,7 +132,7 @@ func (c *ScrapperHttpClient) DeleteLink(ctx context.Context, chatID int64, link 
 	return nil
 }
 
-func (c *ScrapperHttpClient) GetLinks(ctx context.Context, chatID int64) ([]dto.LinkResponse, error) {
+func (c *ScrapperHttpClient) GetLinks(ctx context.Context, chatID int64) (*dto.ListLinksResponse, error) {
 	urlPath := c.url + "/links/" + strconv.FormatInt(chatID, 10)
 
 	req, err := http.NewRequest("GET", urlPath, nil)
@@ -157,9 +157,9 @@ func (c *ScrapperHttpClient) GetLinks(ctx context.Context, chatID int64) ([]dto.
 		return nil, fmt.Errorf("unexpected status code: %d", do.StatusCode)
 	}
 
-	var links []dto.LinkResponse
+	var links dto.ListLinksResponse
 	if err := json.NewDecoder(do.Body).Decode(&links); err != nil {
 		return nil, err
 	}
-	return links, nil
+	return &links, nil
 }

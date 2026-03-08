@@ -1,6 +1,8 @@
 package out
 
 import (
+	"log/slog"
+
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
 )
 
@@ -36,6 +38,7 @@ func (r *InMemoryRepo) GetLinksById(chatId int64) ([]model.Link, error) {
 	if !ok {
 		return []model.Link{}, model.ErrNotFound
 	}
+	slog.Info("got links in repo", "links", item.Links, "id", chatId)
 	links := item.Links
 	return links, nil
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/app"
 )
@@ -9,6 +10,13 @@ import (
 func main() {
 	ctx := context.Background()
 
-	appBot := app.NewApp()
+	app.InitLogging()
+
+	cfg, err := app.LoadConfig()
+	if err != nil {
+		slog.Error("Error loading config ", "error: ", err)
+	}
+
+	appBot := app.NewApp(cfg)
 	appBot.RunService(ctx)
 }

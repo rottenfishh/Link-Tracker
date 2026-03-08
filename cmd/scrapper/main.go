@@ -7,10 +7,17 @@ import (
 )
 
 func main() {
-	scrapper, err := app.NewApp()
+
+	config, err := app.LoadConfig()
+	if err != nil {
+		slog.Error("error while loading config for scheduler", "error", err)
+	}
+
+	scrapper, err := app.NewApp(config)
 	if err != nil {
 		slog.Error("Error creating scrapper app ", "error: ", err)
 	}
+
 	err = scrapper.Run()
 	if err != nil {
 		slog.Error("Error starting scrapper app ", "error: ", err)

@@ -29,6 +29,7 @@ func NewBotServiceServer(publisher *service.UpdatePublisher) *BotServer {
 
 func (s *BotServer) SendUpdate(ctx context.Context, update *bot.LinkUpdate) (*bot.UpdateResponse, error) {
 	if update == nil || update.Link == "" {
+		slog.Error("code", codes.InvalidArgument, "message", "Update is empty")
 		return nil, status.Error(
 			codes.InvalidArgument,
 			"invalid update request",

@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"strconv"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/adapter/in"
 	grpc "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/adapter/in/grpc"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/adapter/in/http"
@@ -18,21 +17,13 @@ import (
 
 type App struct {
 	dispatcher *service.Dispatcher
-	adapter    *in.TgClient
+	adapter    in.TgClient
 	server     *http.Server
 	grpcServer *grpc.BotServer
-	config     AppConfig
+	config     *AppConfig
 }
 
-func NewApp() *App {
-	InitLogging()
-
-	cfg, err := LoadConfig()
-	if err != nil {
-		slog.Error("Error loading config ", "error: ", err)
-		return nil
-	}
-
+func NewApp(cfg *AppConfig) *App {
 	scrapper := out.NewScrapperClient(cfg.ScrapperUrl)
 	scrapperService := service.NewScrapperService(scrapper)
 
@@ -45,7 +36,7 @@ func NewApp() *App {
 	grpcServer := grpc.NewBotServiceServer(publisher)
 	//router := http.NewServer(":"+strconv.Itoa(cfg.Port), publisher)
 
-	return &App{dispatcher: dispatcher, adapter: adapter, config: *cfg, grpcServer: grpcServer}
+	return &App{dispatcher: dispatcher, adapter: adapter, config: cfg, grpcServer: grpcServer}
 }
 
 func (a *App) RunService(ctx context.Context) {
@@ -60,6 +51,7 @@ func (a *App) RunService(ctx context.Context) {
 
 	linkUpdates := a.grpcServer.GetUpdates()
 	tgUpdates := a.adapter.GetUpdates()
+
 	for {
 		select {
 		case update, ok := <-tgUpdates:
@@ -90,17 +82,17 @@ func (a *App) RunService(ctx context.Context) {
 	}
 }
 
-func (a *App) processTgUpdate(ctx context.Context, update tgbotapi.Update) error {
+func (a *App) processTgUpdate(ctx context.Context, update model.ChatUpdate) error {
 	if update.Message == nil {
 		return fmt.Errorf("telegram update message is nil")
 	}
 
-	serverResponse, err := a.dispatcher.Dispatch(ctx, update.Message.Text, update.Message.Chat.ID)
+	serverResponse, err := a.dispatcher.Dispatch(ctx, update.Message.Text, update.ChatID)
 	if err != nil {
 		return fmt.Errorf("Dispatching error", "err", err)
 	}
 
-	err = a.adapter.SendMessage(update.Message.Chat.ID, serverResponse)
+	err = a.adapter.SendMessage(update.ChatID, serverResponse)
 	if err != nil {
 		return fmt.Errorf("TG API sending message error", "err", err)
 	}
@@ -108,7 +100,7 @@ func (a *App) processTgUpdate(ctx context.Context, update tgbotapi.Update) error
 }
 
 func (a *App) processLinkUpdate(ctx context.Context, update model.LinkUpdate) error {
-	newMsg := service.NewMessage("Update for link " + update.Url + " new event: " + update.Description)
+	newMsg := model.NewMessage("Update for link " + update.Link + " new event: " + update.Description)
 	for _, id := range update.TgChatIds {
 		err := a.adapter.SendMessage(id, newMsg)
 		if err != nil {

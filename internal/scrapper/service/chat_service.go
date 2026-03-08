@@ -62,7 +62,7 @@ func (s *ChatService) DeleteLink(chatId int64, req dto.DeleteLinkRequest) (*mode
 }
 
 func (s *ChatService) UpdateLink(chatId int64, link model.Link) (*model.Link, error) {
-	addedLink, err := s.repo.AddLink(chatId, link)
+	addedLink, err := s.repo.UpdateLink(chatId, link)
 	if err != nil {
 		return nil, err
 	}

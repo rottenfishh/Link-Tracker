@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
 )
 
 type Dispatcher struct {
@@ -34,7 +36,7 @@ func (r *Dispatcher) GetCommands() map[string]Command {
 }
 
 // TODO: use tg-bot-docs built-in parser of commands
-func (r *Dispatcher) Dispatch(ctx context.Context, userMessage string, chatId int64) (*Message, error) {
+func (r *Dispatcher) Dispatch(ctx context.Context, userMessage string, chatId int64) (*model.Message, error) {
 	slog.Info(userMessage)
 
 	userArgs := strings.Split(userMessage, " ")

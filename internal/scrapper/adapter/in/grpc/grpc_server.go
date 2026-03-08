@@ -68,6 +68,7 @@ func (s *ScrapperServer) GetLinksByChatID(ctx context.Context, chatID *pb.ChatID
 	for _, link := range links {
 		linksResp.Links = append(linksResp.Links, mapper.ToProtoLinkResponse(&link))
 	}
+	slog.Info("pb links list", "links", linksResp.Links)
 	return &linksResp, nil
 }
 

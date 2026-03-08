@@ -21,7 +21,7 @@ func NewBotHttpNotifier(url string) *BotHttpClient {
 
 // TODO: return response
 func (n *BotHttpClient) SendUpdate(ctx context.Context, update model.LinkUpdate) error {
-	slog.Info("Sending update ", "chat ", update.TgChatIds, " url ", update.Url)
+	slog.Info("Sending update ", "chat ", update.TgChatIds, " url ", update.Link)
 	body, err := json.Marshal(update)
 	if err != nil {
 		return err

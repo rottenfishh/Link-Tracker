@@ -71,7 +71,7 @@ type LinkUpdate struct {
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Link          string                 `protobuf:"bytes,2,opt,name=link,proto3" json:"link,omitempty"`
 	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	TgChatIDS     []int64                `protobuf:"varint,4,rep,packed,name=tgChatIDS,proto3" json:"tgChatIDS,omitempty"`
+	TgChatIDs     []int64                `protobuf:"varint,4,rep,packed,name=tgChatIDs,proto3" json:"tgChatIDs,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -127,9 +127,9 @@ func (x *LinkUpdate) GetDescription() string {
 	return ""
 }
 
-func (x *LinkUpdate) GetTgChatIDS() []int64 {
+func (x *LinkUpdate) GetTgChatIDs() []int64 {
 	if x != nil {
-		return x.TgChatIDS
+		return x.TgChatIDs
 	}
 	return nil
 }
@@ -190,7 +190,7 @@ const file_bot_service_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04link\x18\x02 \x01(\tR\x04link\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1c\n" +
-	"\ttgChatIDS\x18\x04 \x03(\x03R\ttgChatIDS\"*\n" +
+	"\ttgChatIDs\x18\x04 \x03(\x03R\ttgChatIDs\"*\n" +
 	"\x0eUpdateResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage2U\n" +
 	"\n" +

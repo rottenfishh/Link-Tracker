@@ -2,15 +2,15 @@ package model
 
 type LinkUpdate struct {
 	Id          int64   `json:"id"`
-	Url         string  `json:"url"`
+	Link        string  `json:"link"`
 	Description string  `json:"description"`
-	TgChatIds   []int64 `json:"tgChatIds"`
+	TgChatIds   []int64 `json:"tgChatIDs"`
 }
 
 func NewLinkUpdate(id int64, url string, description string, tgChatIds []int64) *LinkUpdate {
 	return &LinkUpdate{
 		Id:          id,
-		Url:         url,
+		Link:        url,
 		Description: description,
 		TgChatIds:   tgChatIds,
 	}

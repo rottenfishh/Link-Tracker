@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
 )
 
 type Command interface {
@@ -10,20 +12,11 @@ type Command interface {
 	Execute(ctx context.Context, state *State) (*CommandResult, error)
 }
 
-type Message struct {
-	Text string
-	/// smth later
-}
-
-func NewMessage(text string) *Message {
-	return &Message{text}
-}
-
 type CommandResult struct {
 	IsFinished bool
-	Message    *Message
+	Message    *model.Message
 }
 
 func NewCommandResult(isFinished bool, message string) *CommandResult {
-	return &CommandResult{isFinished, &Message{message}}
+	return &CommandResult{isFinished, &model.Message{message}}
 }

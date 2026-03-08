@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	dto2 "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/dto"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/dto"
 )
 
 type ScrapperService struct {
@@ -15,7 +15,7 @@ func NewScrapperService(scrapperCLient ScrapperClient) *ScrapperService {
 }
 
 func (s *ScrapperService) AddLink(ctx context.Context, chatID int64, link string, tags []string) error {
-	req := dto2.AddLinkRequest{
+	req := dto.AddLinkRequest{
 		Link: link,
 		Tags: tags,
 	}
@@ -27,7 +27,7 @@ func (s *ScrapperService) AddLink(ctx context.Context, chatID int64, link string
 }
 
 func (s *ScrapperService) DeleteLink(ctx context.Context, chatID int64, link string) error {
-	req := dto2.DeleteLinkRequest{Link: link}
+	req := dto.DeleteLinkRequest{Link: link}
 	err := s.scrapperClient.DeleteLink(ctx, chatID, req)
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func (s *ScrapperService) DeleteLink(ctx context.Context, chatID int64, link str
 	return nil
 }
 
-func (s *ScrapperService) GetLinks(ctx context.Context, chatID int64) ([]dto2.LinkResponse, error) {
+func (s *ScrapperService) GetLinks(ctx context.Context, chatID int64) (*dto.ListLinksResponse, error) {
 	links, err := s.scrapperClient.GetLinks(ctx, chatID)
 	if err != nil {
 		return nil, err

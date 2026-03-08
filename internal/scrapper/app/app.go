@@ -14,14 +14,10 @@ type App struct {
 	scheduler  *service.Scheduler
 	server     *http.Server
 	grpcServer *grpc.ScrapperServer
-	config     ScrapperAppConfig
+	config     *ScrapperAppConfig
 }
 
-func NewApp() (*App, error) {
-	config, err := LoadConfig()
-	if err != nil {
-		return nil, fmt.Errorf("error while loading config for scheduler %v", err)
-	}
+func NewApp(config *ScrapperAppConfig) (*App, error) {
 
 	repo := out.NewInMemoryRepo()
 	chatService := service.NewChatService(repo)
@@ -33,7 +29,7 @@ func NewApp() (*App, error) {
 		return nil, fmt.Errorf("error while building scheduler %v", err)
 	}
 
-	return &App{scheduler: scheduler, grpcServer: grpcServer, config: *config}, nil
+	return &App{scheduler: scheduler, grpcServer: grpcServer, config: config}, nil
 }
 
 // TODO: add gateway port
