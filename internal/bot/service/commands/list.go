@@ -26,13 +26,12 @@ func (cmd *ListCommand) Execute(ctx context.Context, state *service.State) (*ser
 		slog.Error("Error getting links for chat", "id", state.ChatId, "error", err)
 		return service.NewCommandResult(true, "Не удалось получить ссылки"), nil
 	}
-	slog.Info("Got links for chat", "id", state.ChatId, "links", list)
+	slog.Debug("Got links for chat", "id", state.ChatId, "links", list)
 	var res strings.Builder
 	for _, link := range list.Links {
 		res.WriteString(link.Link + "\n")
 	}
 
-	slog.Info("Got links:", "links", res.String())
 	if len(list.Links) == 0 || res.String() == "\n" {
 		return service.NewCommandResult(true, "Вы пока не отслеживаете ни одной ссылки"), nil
 	}

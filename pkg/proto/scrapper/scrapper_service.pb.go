@@ -347,9 +347,9 @@ const file_scrapper_service_proto_rawDesc = "" +
 	"\x04tags\x18\x03 \x03(\tR\x04tags\"?\n" +
 	"\x11RemoveLinkRequest\x12\x16\n" +
 	"\x06chatID\x18\x01 \x01(\x03R\x06chatID\x12\x12\n" +
-	"\x04link\x18\x02 \x01(\tR\x04link2\xc0\x03\n" +
-	"\x0fScrapperService\x12R\n" +
-	"\fRegisterChat\x12\x10.scrapper.ChatID\x1a\x16.scrapper.ChatResponse\"\x18\x82\xd3\xe4\x93\x02\x12:\x01*\"\r/tg-chat/{id}\x12M\n" +
+	"\x04link\x18\x02 \x01(\tR\x04link2\xbd\x03\n" +
+	"\x0fScrapperService\x12O\n" +
+	"\fRegisterChat\x12\x10.scrapper.ChatID\x1a\x16.scrapper.ChatResponse\"\x15\x82\xd3\xe4\x93\x02\x0f\"\r/tg-chat/{id}\x12M\n" +
 	"\n" +
 	"DeleteChat\x12\x10.scrapper.ChatID\x1a\x16.scrapper.ChatResponse\"\x15\x82\xd3\xe4\x93\x02\x0f*\r/tg-chat/{id}\x12U\n" +
 	"\x10GetLinksByChatID\x12\x10.scrapper.ChatID\x1a\x1a.scrapper.ListLinkResponse\"\x13\x82\xd3\xe4\x93\x02\r\x12\v/links/{id}\x12W\n" +

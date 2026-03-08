@@ -7,13 +7,12 @@ import (
 )
 
 type InMemoryRepo struct {
-	Chats       map[int64]*model.Chat
-	Subscribers map[string][]int64
-	nextLinkId  int64
+	Chats      map[int64]*model.Chat
+	nextLinkId int64
 }
 
 func NewInMemoryRepo() *InMemoryRepo {
-	return &InMemoryRepo{make(map[int64]*model.Chat), make(map[string][]int64), 0}
+	return &InMemoryRepo{make(map[int64]*model.Chat), 0}
 }
 func (r *InMemoryRepo) SaveChat(chat *model.Chat) error {
 	r.Chats[chat.Id] = chat
@@ -38,7 +37,7 @@ func (r *InMemoryRepo) GetLinksById(chatId int64) ([]model.Link, error) {
 	if !ok {
 		return []model.Link{}, model.ErrNotFound
 	}
-	slog.Info("got links in repo", "links", item.Links, "id", chatId)
+	slog.Debug("got links in repo", "links", item.Links, "id", chatId)
 	links := item.Links
 	return links, nil
 }
@@ -46,7 +45,7 @@ func (r *InMemoryRepo) GetLinksById(chatId int64) ([]model.Link, error) {
 func (r *InMemoryRepo) AddLink(chatId int64, link model.Link) (*model.Link, error) {
 	_, ok := r.Chats[chatId]
 	if !ok {
-		r.Chats[chatId] = model.NewChat(chatId)
+		return nil, model.ErrNotFound
 	}
 	for _, elem := range r.Chats[chatId].Links {
 		if elem.Link == link.Link {
@@ -57,8 +56,6 @@ func (r *InMemoryRepo) AddLink(chatId int64, link model.Link) (*model.Link, erro
 	link.Id = r.nextLinkId
 
 	r.Chats[chatId].Links = append(r.Chats[chatId].Links, link)
-
-	r.Subscribers[link.Link] = append(r.Subscribers[link.Link], chatId)
 	return &link, nil
 }
 
@@ -75,7 +72,6 @@ func (r *InMemoryRepo) UpdateLink(chatId int64, link model.Link) (*model.Link, e
 	return &link, nil
 }
 
-// TODO: create func
 func (r *InMemoryRepo) DeleteLink(chatId int64, linkName string) (*model.Link, error) {
 	_, ok := r.Chats[chatId]
 	if !ok {
@@ -92,16 +88,5 @@ func (r *InMemoryRepo) DeleteLink(chatId int64, linkName string) (*model.Link, e
 	}
 	r.Chats[chatId].Links = append(r.Chats[chatId].Links[:idx], r.Chats[chatId].Links[idx+1:]...)
 
-	for index, id := range r.Subscribers[linkName] {
-		if id == chatId {
-			idx = index
-		}
-	}
-	r.Subscribers[linkName] = append(r.Subscribers[linkName][:idx], r.Subscribers[linkName][idx+1:]...)
 	return &linkDeleted, nil
-}
-
-func (r *InMemoryRepo) GetChatsByLink(link string) ([]int64, error) {
-	chats := r.Subscribers[link]
-	return chats, nil
 }

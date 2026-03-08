@@ -42,7 +42,7 @@ func LoadConfig() (*AppConfig, error) {
 	cfg := &AppConfig{}
 	tree, err := parse.ParseFile("./app.conf")
 	if err != nil {
-		return nil, fmt.Errorf("failed to read /app.conf:" + err.Error())
+		return nil, fmt.Errorf("failed to read /app.conf: %v", err)
 	}
 
 	parse.Populate(cfg, tree.GetConfig(), "root")

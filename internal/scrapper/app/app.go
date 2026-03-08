@@ -7,6 +7,7 @@ import (
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/in/grpc"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/in/http"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out"
+	http2 "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out/http"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/service"
 )
 
@@ -50,7 +51,7 @@ func (a *App) Run() error {
 func buildScheduler(config ScrapperAppConfig, chatService *service.ChatService) (*service.Scheduler, error) {
 	github := service.NewGithubClient(config.GithubToken)
 	stackOF := service.NewStackOverflowClient(config.StackOFToken)
-	notifier := out.NewBotHttpNotifier(config.BotUrl)
+	notifier := http2.NewBotHttpNotifier(config.BotUrl)
 
 	scheduler, err := service.NewScheduler(notifier, chatService)
 	if err != nil {

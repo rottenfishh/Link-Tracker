@@ -85,7 +85,7 @@ func (c *ScrapperHttpClient) RegisterLink(ctx context.Context, chatID int64, req
 		var errResp dto.ApiErrorResponse
 		err := json.NewDecoder(do.Body).Decode(&errResp)
 		if err != nil {
-			slog.Error("Unexpected error response", err)
+			slog.Error("Unexpected error response", "error", err)
 		}
 		slog.Error("Error with code", "code", do.StatusCode, "Error Response", errResp)
 

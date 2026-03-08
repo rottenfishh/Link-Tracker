@@ -56,7 +56,7 @@ func (a *TgAdapter) SendMessage(chatID int64, message *model.Message) error {
 }
 
 func (a *TgAdapter) GetUpdates() <-chan model.ChatUpdate {
-	out := make(chan model.ChatUpdate)
+	out := make(chan model.ChatUpdate, 100)
 
 	go func() {
 		for upd := range a.Bot.GetUpdatesChan(a.UpdateConfig) {

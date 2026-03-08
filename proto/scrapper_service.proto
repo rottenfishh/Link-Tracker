@@ -10,7 +10,6 @@ service ScrapperService {
   rpc RegisterChat(ChatID) returns (ChatResponse){
     option (google.api.http) = {
       post: "/tg-chat/{id}"
-      body: "*"
     };
   }
   rpc DeleteChat(ChatID) returns (ChatResponse){

@@ -9,7 +9,7 @@ type UpdatePublisher struct {
 }
 
 func NewUpdatePublisher() *UpdatePublisher {
-	return &UpdatePublisher{updates: make(chan model.LinkUpdate)}
+	return &UpdatePublisher{updates: make(chan model.LinkUpdate, 100)}
 }
 
 func (p *UpdatePublisher) PublishUpdate(update model.LinkUpdate) {

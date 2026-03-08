@@ -139,7 +139,7 @@ func (h *HttpHandler) DeleteLink(c *gin.Context) {
 		code := parseServerCode(err)
 		message := "Error deleting link"
 		errResp := dto.NewServiceError(message, err, code)
-		c.JSON(http.StatusInternalServerError, errResp)
+		c.JSON(code, errResp)
 		return
 	}
 	c.IndentedJSON(http.StatusOK, deletedLink)

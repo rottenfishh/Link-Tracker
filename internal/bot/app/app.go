@@ -89,12 +89,12 @@ func (a *App) processTgUpdate(ctx context.Context, update model.ChatUpdate) erro
 
 	serverResponse, err := a.dispatcher.Dispatch(ctx, update.Message.Text, update.ChatID)
 	if err != nil {
-		return fmt.Errorf("Dispatching error", "err", err)
+		return fmt.Errorf("dispatching error %v", err)
 	}
 
 	err = a.adapter.SendMessage(update.ChatID, serverResponse)
 	if err != nil {
-		return fmt.Errorf("TG API sending message error", "err", err)
+		return fmt.Errorf("TG API sending message error %v", err)
 	}
 	return nil
 }

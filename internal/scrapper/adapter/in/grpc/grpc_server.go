@@ -87,6 +87,7 @@ func (s *ScrapperServer) DeleteLink(ctx context.Context, req *pb.RemoveLinkReque
 	link, err := s.chatService.DeleteLink(req.ChatID, mapper.ToDomainRemoveLinkRequest(req))
 	if err != nil {
 		code := parseServerCode(err)
+		slog.Error("delete link failed", "error", err, "code", code)
 		return nil, status.Errorf(code, "failed to delete link: %v", err)
 	}
 	resp := mapper.ToProtoLinkResponse(link)
