@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package scrapper;
+
+import "google/api/annotations.proto";
+
+option go_package = "pkg/proto/scrapper";
+
+service ScrapperService {
+  rpc RegisterChat(ChatID) returns (ChatResponse){
+    option (google.api.http) = {
+      post: "/tg-chat/{id}"
+    };
+  }
+  rpc DeleteChat(ChatID) returns (ChatResponse){
+    option (google.api.http) = {
+      delete: "/tg-chat/{id}"
+    };
+  }
+  rpc GetLinksByChatID(ChatID) returns (ListLinkResponse){
+    option (google.api.http) = {
+      get: "/links/{id}"
+    };
+  }
+  rpc AddLink(AddLinkRequest) returns (LinkResponse){
+    option (google.api.http) = {
+      post: "/links/{chatID}"
+      body: "*"
+    };
+  }
+  rpc DeleteLink(RemoveLinkRequest) returns (LinkResponse){
+    option (google.api.http) = {
+      delete: "/links/{chatID}"
+    };
+  }
+}
+
+message ChatID {
+  int64 id = 1;
+}
+
+message ChatResponse {
+  string message = 1;
+}
+
+message LinkResponse {
+  int64 id = 1;
+  string link = 2;
+  repeated string tags = 3;
+}
+
+message ListLinkResponse {
+  repeated LinkResponse links = 1;
+}
+
+message AddLinkRequest {
+  int64 chatID = 1;
+  string link = 2;
+  repeated string tags = 3;
+}
+
+message RemoveLinkRequest {
+  int64 chatID = 1;
+  string link = 2;
+}
