@@ -2,18 +2,18 @@ package sql
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
 )
 
 type TagRepository struct {
-	db *pgxpool.Pool
+	db *sql.DB
 }
 
-func NewTagRepository(db *pgxpool.Pool) *TagRepository {
+func NewTagRepository(db *sql.DB) *TagRepository {
 	return &TagRepository{db: db}
 }
 
@@ -22,7 +22,7 @@ func (r *TagRepository) SaveTag(ctx context.Context, tag *model.Tag) (*model.Tag
             VALUES ($1) ON CONFLICT (name) DO UPDATE
             SET name = EXCLUDED.name
             RETURNING id, name`
-	row := r.db.QueryRow(ctx, sql, tag.Name)
+	row := r.db.QueryRowContext(ctx, sql, tag.Name)
 	err := row.Scan(&tag.Id, &tag.Name)
 	if err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func (r *TagRepository) SaveTag(ctx context.Context, tag *model.Tag) (*model.Tag
 
 func (r *TagRepository) GetTags(ctx context.Context) ([]model.Tag, error) {
 	sql := `SELECT * FROM tags`
-	rows, err := r.db.Query(ctx, sql)
+	rows, err := r.db.QueryContext(ctx, sql)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (r *TagRepository) GetTags(ctx context.Context) ([]model.Tag, error) {
 
 func (r *TagRepository) DeleteTag(ctx context.Context, tagId int64) (*model.Tag, error) {
 	sql := `DELETE FROM tags WHERE id = $1 RETURNING id, name   `
-	row := r.db.QueryRow(ctx, sql, tagId)
+	row := r.db.QueryRowContext(ctx, sql, tagId)
 	var tag model.Tag
 	err := row.Scan(&tag.Id, &tag.Name)
 	if err != nil {
@@ -70,7 +70,7 @@ func (r *TagRepository) UpdateTag(ctx context.Context, tagId int64, tag *model.T
 	sql := `UPDATE tags SET name = $1 WHERE id = $2
             RETURNING id, name;`
 
-	row := r.db.QueryRow(ctx, sql, tag.Name, tagId)
+	row := r.db.QueryRowContext(ctx, sql, tag.Name, tagId)
 
 	var newTag model.Tag
 	err := row.Scan(&newTag.Id, &newTag.Name)
@@ -83,7 +83,7 @@ func (r *TagRepository) UpdateTag(ctx context.Context, tagId int64, tag *model.T
 
 func (r *TagRepository) DeleteTagByName(ctx context.Context, tagName string) (*model.Tag, error) {
 	sql := `DELETE FROM TAGS WHERE name = $1 RETURNING id, name;`
-	row := r.db.QueryRow(ctx, sql, tagName)
+	row := r.db.QueryRowContext(ctx, sql, tagName)
 	var newTag model.Tag
 	err := row.Scan(&newTag.Id, &newTag.Name)
 	if err != nil {

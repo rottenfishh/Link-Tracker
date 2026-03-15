@@ -1,28 +1,27 @@
-package sql
+package query_builder
 
 import (
 	"context"
 	"database/sql"
 	"errors"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
 )
 
 type LinkTagRepository struct {
-	db *sql.DB
+	db   *sql.DB
+	psql sq.StatementBuilderType
 }
 
-func NewLinkTagRepository(pool *sql.DB) *LinkTagRepository {
-	return &LinkTagRepository{db: pool}
+func NewLinkTagRepository(db *sql.DB, psql sq.StatementBuilderType) *LinkTagRepository {
+	return &LinkTagRepository{db: db, psql: psql}
 }
 
 func (r *LinkTagRepository) GetLinksByTagID(ctx context.Context, tagId int64) ([]model.Link, error) {
-	sql := `SELECT l.id, l.link, l.domain, l.last_updated
-            FROM links l
-            JOIN link_tag cl ON cl.link_id = l.id
-            WHERE cl.tag_id = $1`
-	rows, err := r.db.QueryContext(ctx, sql, tagId)
+	rows, err := r.psql.Select("l.id, l.link, l.domain, l.last_updated").From("links l").
+		Join("link_tag cl on cl.link_id = l.id").Where(sq.Eq{"cl.tag_id": tagId}).RunWith(r.db).QueryContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,19 +46,21 @@ func (r *LinkTagRepository) GetLinksByTagID(ctx context.Context, tagId int64) ([
 }
 
 func (r *LinkTagRepository) Save(ctx context.Context, linkId int64, tagId int64) error {
-	sql := `INSERT INTO link_tag(link_id, tag_id) VALUES($1, $2)`
-	_, err := r.db.ExecContext(ctx, sql, linkId, tagId)
+	_, err := r.psql.Insert("link_tag").Columns("link_id", "tag_id").Values(linkId, tagId).
+		RunWith(r.db).Exec()
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func (r *LinkTagRepository) Delete(ctx context.Context, linkId int64, tagId int64) error {
-	sql := `DELETE FROM link_tag WHERE link_id = $1 AND tag_id = $2`
-	_, err := r.db.ExecContext(ctx, sql, linkId, tagId)
+	_, err := r.psql.Delete("link_tag").Where(sq.Eq{"link_id": linkId, "tag_id": tagId}).
+		RunWith(r.db).Exec()
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

@@ -2,23 +2,23 @@ package sql
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
 )
 
 type ChatRepository struct {
-	db *pgxpool.Pool
+	db *sql.DB
 }
 
-func NewChatRepository(db *pgxpool.Pool) *ChatRepository {
+func NewChatRepository(db *sql.DB) *ChatRepository {
 	return &ChatRepository{db: db}
 }
 
 func (r *ChatRepository) SaveChat(ctx context.Context, chat *model.Chat) error {
-	_, err := r.db.Exec(ctx,
+	_, err := r.db.ExecContext(ctx,
 		`INSERT INTO chats(id)
      VALUES($1)
      ON CONFLICT (id) DO NOTHING`,
@@ -31,7 +31,7 @@ func (r *ChatRepository) SaveChat(ctx context.Context, chat *model.Chat) error {
 }
 
 func (r *ChatRepository) GetChats(ctx context.Context) ([]model.Chat, error) {
-	rows, err := r.db.Query(ctx, "SELECT * FROM chats")
+	rows, err := r.db.QueryContext(ctx, "SELECT * FROM chats")
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (r *ChatRepository) GetChats(ctx context.Context) ([]model.Chat, error) {
 }
 
 func (r *ChatRepository) DeleteChat(ctx context.Context, chatId int64) (*model.Chat, error) {
-	row := r.db.QueryRow(ctx, "DELETE FROM chats WHERE id = $1 RETURNING id", chatId)
+	row := r.db.QueryRowContext(ctx, "DELETE FROM chats WHERE id = $1 RETURNING id", chatId)
 
 	var chat model.Chat
 	err := row.Scan(&chat.ChatID, &chat.UserID)

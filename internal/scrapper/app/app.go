@@ -2,13 +2,16 @@ package app
 
 import (
 	"context"
+	realsql "database/sql"
 	"fmt"
 	"log/slog"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	sq "github.com/Masterminds/squirrel"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/in/grpc"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out/http"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out/repository/query_builder"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out/repository/sql"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/service"
 )
@@ -84,32 +87,38 @@ func buildScheduler(config ScrapperAppConfig, chatService *service.ChatService) 
 	return scheduler, nil
 }
 
-func connectDB(ctx context.Context, dbConfig DatabaseConfig) (*pgxpool.Pool, error) {
+func connectDB(ctx context.Context, dbConfig DatabaseConfig) (*realsql.DB, error) {
 	dsn := dbConfig.DSN()
-	pool, err := pgxpool.New(ctx, dsn)
+	conn, err := realsql.Open("pgx", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("error connecting to database %v", err)
+		return nil, fmt.Errorf("unable to connect to database: %v\n", err)
 	}
+
 	err = RunMigrations(dsn)
 	if err != nil {
 		return nil, err
 	}
-	return pool, nil
+	return conn, nil
 }
 
-func buildRepos(accessType string, pool *pgxpool.Pool) (*Repositories, error) {
+func buildRepos(accessType string, db *realsql.DB) (*Repositories, error) {
 	switch accessType {
 	case "sql":
-		chatRepo := sql.NewChatRepository(pool)
-		linkRepo := sql.NewLinkRepository(pool)
-		chatLinkRepo := sql.NewChatLinkRepository(pool)
-		tagRepo := sql.NewTagRepository(pool)
-		linkTagRepo := sql.NewLinkTagRepository(pool)
+		chatRepo := sql.NewChatRepository(db)
+		linkRepo := sql.NewLinkRepository(db)
+		chatLinkRepo := sql.NewChatLinkRepository(db)
+		tagRepo := sql.NewTagRepository(db)
+		linkTagRepo := sql.NewLinkTagRepository(db)
 		return &Repositories{chatRepo, linkRepo, chatLinkRepo, tagRepo, linkTagRepo}, nil
 	case "query":
-		//TODO: implement me
+		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+		chatRepo := query_builder.NewChatRepository(db, psql)
+		linkRepo := query_builder.NewLinkRepository(db, psql)
+		chatLinkRepo := query_builder.NewChatLinkRepository(db, psql)
+		tagRepo := query_builder.NewTagRepository(db, psql)
+		linkTagRepo := query_builder.NewLinkTagRepository(db, psql)
+		return &Repositories{chatRepo, linkRepo, chatLinkRepo, tagRepo, linkTagRepo}, nil
 	default:
 		return nil, fmt.Errorf("not supported type of repository: " + accessType)
 	}
-	return nil, nil
 }
