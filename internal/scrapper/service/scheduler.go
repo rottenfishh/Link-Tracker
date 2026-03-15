@@ -40,25 +40,15 @@ func (s *Scheduler) GetUpdater(name string) LinkUpdater {
 	return s.updaters[name]
 }
 
+// TODO: iterate over links first
 // TODO: нужно идти по линкам, а не по чатам, и уведомлять всех, кто подписан на линк.
-func (s *Scheduler) updateUsers() error {
-	chats, err := s.service.GetChats()
+func (s *Scheduler) updateLinks(ctx context.Context) error {
+	links, err := s.service.GetLinks(ctx)
 	if err != nil {
 		return err
 	}
-	for _, chat := range chats {
-		err = s.updateLinks(chat)
-		if err != nil {
-			slog.Error("error updating links: ", "error ", err, " chat", chat)
-			return err
-		}
-	}
-	return nil
-}
 
-// TODO: save new time for link in repo properly
-func (s *Scheduler) updateLinks(chat model.Chat) error {
-	for _, link := range chat.Links {
+	for _, link := range links {
 		tracker := s.updaters[link.Domain]
 		if tracker == nil {
 			slog.Error("No link tracker for this url found: ", "url", link)
@@ -71,24 +61,36 @@ func (s *Scheduler) updateLinks(chat model.Chat) error {
 			return err
 		}
 
-		if update.LastModified.After(link.LastModified) {
-			slog.Info("KILL MYSELF")
-			slog.Info("Updating ", link.Link, "time", link.LastModified.String(), " to ", update.LastModified)
-			chats := []int64{chat.Id}
-			upd := model.NewLinkUpdate(1, link.Link, "New event from given link", chats)
-			err = s.notifier.SendUpdate(context.Background(), *upd)
+		if update.LastModified.After(link.LastUpdated) {
+			err = s.updateUsers(ctx, &link, update)
 			if err != nil {
-				slog.Error("error sending update to bot", "error", err)
-				return err
-			}
-
-			link.LastModified = update.LastModified
-			_, err = s.service.UpdateLink(chat.Id, link)
-			if err != nil {
-				slog.Error("error updating link time in repo", "error", err)
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+func (s *Scheduler) updateUsers(ctx context.Context, link *model.Link, update *model.Update) error {
+	subscribers, err := s.service.GetSubscribersByLink(ctx, link)
+	if err != nil {
+		return err
+	}
+
+	slog.Info("Updating ", link.Link, "time", link.LastUpdated.String(), " to ", update.LastModified)
+	upd := model.NewLinkUpdate(1, link.Link, "New event from given link", subscribers)
+
+	err = s.notifier.SendUpdate(context.Background(), *upd)
+	if err != nil {
+		slog.Error("error sending update to bot", "error", err)
+		return err
+	}
+
+	link.LastUpdated = update.LastModified
+	_, err = s.service.UpdateLink(ctx, link)
+	if err != nil {
+		slog.Error("error updating link time in chatRepo", "error", err)
+		return err
 	}
 	return nil
 }
@@ -98,7 +100,7 @@ func (s *Scheduler) StartScheduler() error {
 		gocron.DurationJob(
 			30*time.Second,
 		),
-		gocron.NewTask(s.updateUsers),
+		gocron.NewTask(s.updateLinks),
 		gocron.WithSingletonMode(gocron.LimitModeWait),
 	)
 	if err != nil {

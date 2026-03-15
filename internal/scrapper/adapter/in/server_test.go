@@ -3,32 +3,27 @@ package in
 import (
 	"bytes"
 	"encoding/json"
-	"log/slog"
 	"net/http"
 	"testing"
-	"time"
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/dto"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/in/grpc"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/service"
 )
 
 const baseURL = "http://127.0.0.1:8082"
 
-func TestMain(m *testing.M) {
-	chatService := service.NewChatService(out.NewInMemoryRepo())
-	server := grpc.NewScrapperServer(chatService)
-
-	go func() {
-		err := server.RunServer("8085", "8082")
-		if err != nil {
-			slog.Error("Error starting server:", "error", err)
-		}
-	}()
-	time.Sleep(2000 * time.Millisecond)
-	m.Run()
-}
+//func TestMain(m *testing.M) {
+//	chatService := service.NewChatService()
+//	server := grpc.NewScrapperServer(chatService)
+//
+//	go func() {
+//		err := server.RunServer("8085", "8082")
+//		if err != nil {
+//			slog.Error("Error starting server:", "error", err)
+//		}
+//	}()
+//	time.Sleep(2000 * time.Millisecond)
+//	m.Run()
+//}
 
 func TestAddAndGetLink(t *testing.T) {
 	resp, err := postJSON(baseURL+"/tg-chat/1", nil)

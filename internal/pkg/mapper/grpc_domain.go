@@ -26,7 +26,6 @@ func ToProtoLinkResponse(link *model.Link) *scrapper.LinkResponse {
 	return &scrapper.LinkResponse{
 		Id:   link.Id,
 		Link: link.Link,
-		Tags: link.Tags,
 	}
 }
 

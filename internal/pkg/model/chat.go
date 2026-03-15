@@ -1,10 +1,10 @@
 package model
 
 type Chat struct {
-	Id    int64  `json:"id"`
-	Links []Link `json:"links"`
+	ChatID int64 `json:"chat_id"`
+	UserID int64 `json:"user_id"`
 }
 
 func NewChat(id int64) *Chat {
-	return &Chat{Id: id}
+	return &Chat{ChatID: id}
 }
