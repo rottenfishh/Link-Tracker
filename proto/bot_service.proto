@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package bot;
+
+import "google/api/annotations.proto";
+
+option go_package = "pkg/proto/bot";
+
+
+service BotService {
+  rpc SendUpdate(LinkUpdate) returns (UpdateResponse) {
+    option (google.api.http) = {
+      post: "/updates"
+      body: "*"
+    };
+  }
+}
+
+message ChatID{
+  int64 ID = 1;
+}
+
+message LinkUpdate{
+  int64 id = 1;
+  string link = 2;
+  string description = 3;
+  repeated int64 tgChatIDs = 4;
+}
+
+message UpdateResponse {
+  string message = 1;
+}
