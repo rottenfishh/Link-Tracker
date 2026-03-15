@@ -30,3 +30,17 @@ type ChatLinkRepository interface {
 	GetChatsByLinkID(ctx context.Context, linkID int64) ([]model.Chat, error)
 	GetChatIdsByLinkID(ctx context.Context, linkId int64) ([]int64, error)
 }
+
+type TagRepository interface {
+	SaveTag(ctx context.Context, tag *model.Tag) (*model.Tag, error)
+	GetTags(ctx context.Context) ([]model.Tag, error)
+	DeleteTag(ctx context.Context, tagId int64) (*model.Tag, error)
+	UpdateTag(ctx context.Context, tagId int64, tag *model.Tag) (*model.Tag, error)
+	DeleteTagByName(ctx context.Context, tagName string) (*model.Tag, error)
+}
+
+type LinkTagRepository interface {
+	GetLinksByTagID(ctx context.Context, tagId int64) ([]model.Link, error)
+	Save(ctx context.Context, linkId int64, tagId int64) error
+	Delete(ctx context.Context, linkId int64, tagId int64) error
+}

@@ -12,11 +12,11 @@ import (
 
 // TODO: build app
 type ScrapperAppConfig struct {
-	GithubToken    string          `config:"github_token"`
-	StackOFToken   string          `config:"stack_of_token"`
-	BotUrl         string          `config:"bot_url"`
-	Port           string          `config:"port"`
-	DatabaseConfig *DatabaseConfig `config:"database"`
+	GithubToken    string         `config:"github_token"`
+	StackOFToken   string         `config:"stack_of_token"`
+	BotUrl         string         `config:"bot_url"`
+	Port           string         `config:"port"`
+	DatabaseConfig DatabaseConfig `config:"database"`
 }
 
 type DatabaseConfig struct {
@@ -57,10 +57,6 @@ func LoadConfig() (*ScrapperAppConfig, error) {
 	}
 	cfg.StackOFToken = stackOFToken
 	cfg.GithubToken = ghToken
-
-	if cfg.DatabaseConfig == nil {
-		cfg.DatabaseConfig = &DatabaseConfig{}
-	}
 
 	cfg.DatabaseConfig.DatabaseUrl = os.Getenv("DATABASE_URL")
 	cfg.DatabaseConfig.Name = os.Getenv("DATABASE_NAME")

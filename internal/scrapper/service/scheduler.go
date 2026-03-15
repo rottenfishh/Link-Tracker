@@ -58,13 +58,15 @@ func (s *Scheduler) updateLinks(ctx context.Context) error {
 		slog.Info("Requesting update from ", "link", link.Link)
 		update, err := tracker.GetUpdates(link.Link)
 		if err != nil {
-			return err
+			slog.Error("Error getting update for ", link.Link, "error", err)
+			continue
 		}
 
 		if update.LastModified.After(link.LastUpdated) {
 			err = s.updateUsers(ctx, &link, update)
 			if err != nil {
-				return err
+				slog.Error("Error updatins users for ", link.Link, "error", err)
+				continue
 			}
 		}
 	}

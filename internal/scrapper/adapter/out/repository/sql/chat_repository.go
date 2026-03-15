@@ -18,9 +18,12 @@ func NewChatRepository(db *pgxpool.Pool) *ChatRepository {
 }
 
 func (r *ChatRepository) SaveChat(ctx context.Context, chat *model.Chat) error {
-	row := r.db.QueryRow(ctx, `INSERT INTO chats(id, user_id) 
-		VALUES($1)`, chat.ChatID, chat.UserID)
-	err := row.Scan(&chat.ChatID)
+	_, err := r.db.Exec(ctx,
+		`INSERT INTO chats(id)
+     VALUES($1)
+     ON CONFLICT (id) DO NOTHING`,
+		chat.ChatID,
+	)
 	if err != nil {
 		return err
 	}

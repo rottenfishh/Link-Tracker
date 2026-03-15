@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
+	"strings"
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/dto"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
@@ -12,10 +15,13 @@ type ChatService struct {
 	ChatRepo     out.ChatRepository
 	LinkRepo     out.LinkRepository
 	ChatLinkRepo out.ChatLinkRepository
+	TagRepo      out.TagRepository
+	LinkTagRepo  out.LinkTagRepository
 }
 
-func NewChatService(chatRepo out.ChatRepository, linkRepo out.LinkRepository, chatLinkRepo out.ChatLinkRepository) *ChatService {
-	return &ChatService{chatRepo, linkRepo, chatLinkRepo}
+func NewChatService(chatRepo out.ChatRepository, linkRepo out.LinkRepository,
+	chatLinkRepo out.ChatLinkRepository, tagRepo out.TagRepository, linkTagRepo out.LinkTagRepository) *ChatService {
+	return &ChatService{chatRepo, linkRepo, chatLinkRepo, tagRepo, linkTagRepo}
 }
 
 func (s *ChatService) RegisterChat(ctx context.Context, id int64) (*model.Chat, error) {
@@ -61,17 +67,24 @@ func (s *ChatService) AddLink(ctx context.Context, chatId int64, req dto.AddLink
 		return nil, err
 	}
 
+	for _, tag := range req.Tags {
+		addedTag, err := s.TagRepo.SaveTag(ctx, model.NewTag(tag))
+		if err != nil {
+			return nil, fmt.Errorf("error saving tag: %w", err)
+		}
+		err = s.LinkTagRepo.Save(ctx, addedLink.Id, addedTag.Id)
+		if err != nil {
+			return nil, fmt.Errorf("error adding tag to link: %w", err)
+		}
+	}
+
 	return addedLink, nil
 }
 
 func (s *ChatService) DeleteLink(ctx context.Context, chatId int64, req dto.DeleteLinkRequest) (*model.Link, error) {
-	//link, err := s.linkRepo.DeleteLinkByName(chatId, req.Link)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//return link, nil
-	link, err := s.LinkRepo.GetLinkByName(ctx, req.Link)
+	link, err := s.LinkRepo.GetLinkByName(ctx, strings.TrimSpace(req.Link))
 	if err != nil {
+		slog.Error("Link not found in link repo", req.Link)
 		return nil, model.ErrNotFound
 	}
 

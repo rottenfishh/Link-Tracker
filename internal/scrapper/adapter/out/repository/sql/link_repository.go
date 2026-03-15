@@ -26,11 +26,11 @@ func (r *LinkRepository) AddLink(ctx context.Context, link model.Link) (*model.L
 
 	var addedLink model.Link
 
-	err := row.Scan(&addedLink.Id, addedLink.Link, &addedLink.Domain, &addedLink.LastUpdated)
+	err := row.Scan(&addedLink.Id, &addedLink.Link, &addedLink.Domain, &addedLink.LastUpdated)
 	if err != nil {
 		return nil, err
 	}
-	return &link, nil
+	return &addedLink, nil
 }
 
 func (r *LinkRepository) DeleteLink(ctx context.Context, linkID int64) (*model.Link, error) {
@@ -113,7 +113,7 @@ func (r *LinkRepository) GetLinkByName(ctx context.Context, linkName string) (*m
 	row := r.db.QueryRow(ctx, sql, linkName)
 
 	var link model.Link
-	err := row.Scan(&link.Id, &link.Link, &link.Domain)
+	err := row.Scan(&link.Id, &link.Link, &link.Domain, &link.LastUpdated)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, model.ErrNotFound
 	}

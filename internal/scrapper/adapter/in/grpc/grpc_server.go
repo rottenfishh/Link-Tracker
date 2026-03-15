@@ -42,6 +42,7 @@ func (s *ScrapperServer) RegisterChat(ctx context.Context, chatID *pb.ChatID) (*
 		//		errResp := dto.NewServiceError(message, err, code)
 		//		c.IndentedJSON(http.StatusInternalServerError, errResp)
 		code := parseServerCode(err)
+		slog.Error("failed to register chat: %v", err)
 		return nil, status.Errorf(code, "failed to register chat: %v", err)
 	}
 	return &pb.ChatResponse{Message: "Chat registered"}, nil
@@ -51,6 +52,7 @@ func (s *ScrapperServer) DeleteChat(ctx context.Context, chatID *pb.ChatID) (*pb
 	err := s.chatService.DeleteChat(ctx, chatID.Id)
 	if err != nil {
 		code := parseServerCode(err)
+		slog.Error("failed to delete chat: %v", err)
 		return nil, status.Errorf(code, "failed to delete chat: %v", err)
 	}
 	return &pb.ChatResponse{Message: "Chat successfully deleted"}, nil
@@ -60,6 +62,7 @@ func (s *ScrapperServer) GetLinksByChatID(ctx context.Context, chatID *pb.ChatID
 	links, err := s.chatService.GetLinksByChatId(ctx, chatID.Id)
 	if err != nil {
 		code := parseServerCode(err)
+		slog.Error("failed to get links: %v", err)
 		return nil, status.Errorf(code, "failed to get links: %v", err)
 	}
 	var linksResp pb.ListLinkResponse
@@ -77,6 +80,7 @@ func (s *ScrapperServer) AddLink(ctx context.Context, req *pb.AddLinkRequest) (*
 	link, err := s.chatService.AddLink(ctx, req.ChatID, request)
 	if err != nil {
 		code := parseServerCode(err)
+		slog.Error(code.String(), "failed to add link: %v", err)
 		return nil, status.Errorf(code, "failed to add link: %v", err)
 	}
 	resp := mapper.ToProtoLinkResponse(link)

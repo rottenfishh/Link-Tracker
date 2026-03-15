@@ -26,6 +26,8 @@ type Repositories struct {
 	ChatRepo     out.ChatRepository
 	LinkRepo     out.LinkRepository
 	ChatLinkRepo out.ChatLinkRepository
+	TagRepo      out.TagRepository
+	LinkTagRepo  out.LinkTagRepository
 }
 
 func NewApp(config *ScrapperAppConfig) (*App, error) {
@@ -40,7 +42,7 @@ func NewApp(config *ScrapperAppConfig) (*App, error) {
 		return nil, fmt.Errorf("error while building repos %v", err)
 	}
 
-	chatService := service.NewChatService(repos.ChatRepo, repos.LinkRepo, repos.ChatLinkRepo)
+	chatService := service.NewChatService(repos.ChatRepo, repos.LinkRepo, repos.ChatLinkRepo, repos.TagRepo, repos.LinkTagRepo)
 
 	//httpRouter := http.NewServer(":"+config.Port, chatService)
 	grpcServer := grpc.NewScrapperServer(chatService)
@@ -82,7 +84,7 @@ func buildScheduler(config ScrapperAppConfig, chatService *service.ChatService) 
 	return scheduler, nil
 }
 
-func connectDB(ctx context.Context, dbConfig *DatabaseConfig) (*pgxpool.Pool, error) {
+func connectDB(ctx context.Context, dbConfig DatabaseConfig) (*pgxpool.Pool, error) {
 	dsn := dbConfig.DSN()
 	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
@@ -101,7 +103,9 @@ func buildRepos(accessType string, pool *pgxpool.Pool) (*Repositories, error) {
 		chatRepo := sql.NewChatRepository(pool)
 		linkRepo := sql.NewLinkRepository(pool)
 		chatLinkRepo := sql.NewChatLinkRepository(pool)
-		return &Repositories{chatRepo, linkRepo, chatLinkRepo}, nil
+		tagRepo := sql.NewTagRepository(pool)
+		linkTagRepo := sql.NewLinkTagRepository(pool)
+		return &Repositories{chatRepo, linkRepo, chatLinkRepo, tagRepo, linkTagRepo}, nil
 	case "query":
 		//TODO: implement me
 	default:
