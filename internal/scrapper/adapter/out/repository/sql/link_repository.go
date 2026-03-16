@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
@@ -80,9 +81,9 @@ func (r *LinkRepository) UpdateLink(ctx context.Context, linkID int64, link *mod
 	return &linkNew, nil
 }
 
-func (r *LinkRepository) GetLinks(ctx context.Context) ([]model.Link, error) {
-	sql := `SELECT * FROM links`
-	rows, err := r.db.QueryContext(ctx, sql)
+func (r *LinkRepository) GetLinks(ctx context.Context, offset, limit int64) ([]model.Link, error) {
+	sql := `SELECT * FROM links OFFSET $1 LIMIT $2;`
+	rows, err := r.db.QueryContext(ctx, sql, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -121,4 +122,30 @@ func (r *LinkRepository) GetLinkByName(ctx context.Context, linkName string) (*m
 		return nil, err
 	}
 	return &link, nil
+}
+
+func (r *LinkRepository) GetLinksOlderThan(ctx context.Context, time time.Time, limit, offset int) ([]model.Link, error) {
+	sql := `SELECT * FROM links WHERE last_updated < $1 ORDER BY last_updated LIMIT $2 OFFSET $3;`
+	rows, err := r.db.QueryContext(ctx, sql, time, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	links := make([]model.Link, 0)
+	for rows.Next() {
+		var link model.Link
+		err = rows.Scan(&link.Id, &link.Link, &link.Domain, &link.LastUpdated)
+		if err != nil {
+			return nil, err
+		}
+		links = append(links, link)
+	}
+
+	if err := rows.Err(); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, model.ErrNotFound
+		}
+		return nil, err
+	}
+	return links, nil
 }

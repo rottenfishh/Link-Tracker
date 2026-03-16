@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/dto"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
@@ -105,9 +106,29 @@ func (s *ChatService) UpdateLink(ctx context.Context, link *model.Link) (*model.
 }
 
 func (s *ChatService) GetLinks(ctx context.Context) ([]model.Link, error) {
-	return s.LinkRepo.GetLinks(ctx)
+	return s.LinkRepo.GetLinks(ctx, 0, 100)
 }
 
+func (s *ChatService) ForEachLinkOlderThan(ctx context.Context, time time.Time, limit int, fn func(ctx context.Context, link *model.Link) error) error {
+	offset := 0
+	for {
+		links, err := s.LinkRepo.GetLinksOlderThan(ctx, time, offset, limit)
+		if err != nil {
+			return err
+		}
+		if len(links) == 0 {
+			break
+		}
+		for _, link := range links {
+			if err = fn(ctx, &link); err != nil {
+				slog.Error(err.Error())
+				continue
+			}
+		}
+		offset += (len(links))
+	}
+	return nil
+}
 func (s *ChatService) GetSubscribersByLink(ctx context.Context, link *model.Link) ([]int64, error) {
 	return s.ChatLinkRepo.GetChatIdsByLinkID(ctx, link.Id)
 }

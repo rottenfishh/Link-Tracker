@@ -77,8 +77,8 @@ func (r *LinkRepository) UpdateLink(ctx context.Context, linkID int64, link *mod
 	return &linkNew, nil
 }
 
-func (r *LinkRepository) GetLinks(ctx context.Context) ([]model.Link, error) {
-	rows, err := r.psql.Select("*").From("links").RunWith(r.db).QueryContext(ctx)
+func (r *LinkRepository) GetLinks(ctx context.Context, offset, limit int64) ([]model.Link, error) {
+	rows, err := r.psql.Select("*").From("links").Offset(uint64(offset)).Limit(uint64(limit)).RunWith(r.db).QueryContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -115,4 +115,33 @@ func (r *LinkRepository) GetLinkByName(ctx context.Context, linkName string) (*m
 	}
 
 	return &link, nil
+}
+
+func (r *LinkRepository) GetLinksOlderThan(ctx context.Context, time time.Time, limit, offset int) ([]model.Link, error) {
+	rows, err := r.psql.Select("*").From("links").Where(sq.Lt{"last_updated": time}).
+		OrderBy("last_updated ASC").
+		Limit(uint64(limit)).
+		Offset(uint64(offset)).
+		RunWith(r.db).QueryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	links := make([]model.Link, 0)
+	for rows.Next() {
+		var link model.Link
+		err = rows.Scan(&link.Id, &link.Link, &link.Domain, &link.LastUpdated)
+		if err != nil {
+			return nil, err
+		}
+		links = append(links, link)
+	}
+
+	if err := rows.Err(); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, model.ErrNotFound
+		}
+		return nil, err
+	}
+	return links, nil
 }

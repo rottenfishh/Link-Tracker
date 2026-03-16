@@ -2,6 +2,7 @@ package out
 
 import (
 	"context"
+	"time"
 
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
 )
@@ -19,8 +20,9 @@ type LinkRepository interface {
 	DeleteLink(ctx context.Context, linkID int64) (*model.Link, error)
 	DeleteLinkByName(ctx context.Context, linkName string) (*model.Link, error)
 	UpdateLink(ctx context.Context, linkID int64, link *model.Link) (*model.Link, error)
-	GetLinks(ctx context.Context) ([]model.Link, error)
+	GetLinks(ctx context.Context, offset, limit int64) ([]model.Link, error)
 	GetLinkByName(ctx context.Context, linkName string) (*model.Link, error)
+	GetLinksOlderThan(ctx context.Context, time time.Time, limit, offset int) ([]model.Link, error)
 }
 
 type ChatLinkRepository interface {

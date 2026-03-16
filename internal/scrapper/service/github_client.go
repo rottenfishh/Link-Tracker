@@ -77,7 +77,7 @@ func parseTime(tm string) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("no last-modified date found")
 	}
 
-	const layout = "Mon, 01 Jan 2006 15:04:05 MST"
+	const layout = "Mon, 02 Jan 2006 15:04:05 MST"
 	timeModified, err := time.Parse(layout, tm)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("error parsing time from last modified header github docs %v", err)
