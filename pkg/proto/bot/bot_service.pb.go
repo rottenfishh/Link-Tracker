@@ -24,7 +24,7 @@ const (
 
 type ChatID struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ID            int64                  `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`
+	ID            int64                  `protobuf:"varint,1,opt,name=Id,proto3" json:"Id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

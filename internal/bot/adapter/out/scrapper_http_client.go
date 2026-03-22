@@ -101,15 +101,11 @@ func (c *ScrapperHttpClient) RegisterLink(ctx context.Context, chatID int64, req
 	return nil
 }
 
+// pass link in query now
 func (c *ScrapperHttpClient) DeleteLink(ctx context.Context, chatID int64, link dto.DeleteLinkRequest) error {
-	urlPath := c.url + "/links/" + strconv.FormatInt(chatID, 10)
+	urlPath := c.url + "/links/" + strconv.FormatInt(chatID, 10) + "?link=" + link.Link
 
-	body, err := json.Marshal(link)
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest("DELETE", urlPath, bytes.NewBuffer(body))
+	req, err := http.NewRequest("DELETE", urlPath, nil)
 	if err != nil {
 		return err
 	}

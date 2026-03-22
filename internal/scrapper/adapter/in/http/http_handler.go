@@ -31,7 +31,7 @@ func (h *HttpHandler) RegisterChat(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errResp)
 	}
 
-	chat, err := h.service.RegisterChat(idInt)
+	chat, err := h.service.RegisterChat(c.Request.Context(), idInt)
 	if err != nil {
 		code := parseServerCode(err)
 		message := "Error saving chat"
@@ -51,7 +51,7 @@ func (h *HttpHandler) DeleteChat(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errResp)
 	}
 
-	err = h.service.DeleteChat(idInt)
+	err = h.service.DeleteChat(c.Request.Context(), idInt)
 	if err != nil {
 		code := parseServerCode(err)
 		message := "Error deleting chat"
@@ -71,7 +71,7 @@ func (h *HttpHandler) GetLinksByChatId(c *gin.Context) {
 		return
 	}
 
-	links, err := h.service.GetLinksByChatId(idInt)
+	links, err := h.service.GetLinksByChatId(c.Request.Context(), idInt)
 	if err != nil {
 		code := parseServerCode(err)
 		message := "Error getting links"
@@ -104,7 +104,7 @@ func (h *HttpHandler) AddLink(c *gin.Context) {
 		return
 	}
 
-	addedLink, err := h.service.AddLink(idInt, link)
+	addedLink, err := h.service.AddLink(c.Request.Context(), idInt, link)
 	if err != nil {
 		code := parseServerCode(err)
 		message := "Error tracking link"
@@ -134,7 +134,7 @@ func (h *HttpHandler) DeleteLink(c *gin.Context) {
 		return
 	}
 
-	deletedLink, err := h.service.DeleteLink(idInt, link)
+	deletedLink, err := h.service.DeleteLink(c, idInt, link)
 	if err != nil {
 		code := parseServerCode(err)
 		message := "Error deleting link"
