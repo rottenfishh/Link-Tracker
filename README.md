@@ -7,7 +7,10 @@
 
 Получить токен тг-бота по [ссылке](./https://help.botman.pro/article/23763) .
 
-Создать .env файл в корне проекта и положить туда токен, как в env.example.
+
+Получить токены github и stackOverFlow: [тык1](./https://github.com/settings/tokens) и [тык2](./https://stackapps.com/applications)
+
+Создать .env файл в корне проекта и положить туда токены, согласно env.example.
 
 Исполнить следующие команды:
 
@@ -15,7 +18,11 @@
 ```
 go mod tidy
 
-go build -o main cmd/bot/main.go
+go build -o bot cmd/bot/main.go
 
-./main - запуск бота
+./bot 
+
+go build -o scrapper cmd/scrapper/main.go
+
+./scrapper 
 ```
