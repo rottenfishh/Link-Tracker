@@ -16,6 +16,10 @@ type GithubClient struct {
 	client *http.Client
 }
 
+func (c *GithubClient) GetDomain() string {
+	return "github"
+}
+
 func NewGithubClient(token string) *GithubClient {
 	client := http.DefaultClient
 	return &GithubClient{token: token, client: client}

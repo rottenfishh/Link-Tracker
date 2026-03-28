@@ -28,16 +28,21 @@ func (cmd *TrackCommand) Description() string {
 // . if flag is set, accept args as tags. /cancel is processed in adapter, and sent to this cmmand to. if its sent, we save stuff
 func (cmd *TrackCommand) Execute(ctx context.Context, state *service.State) (*service.CommandResult, error) {
 	if state.Step == 1 {
+		state.Step = 2
+		return service.NewCommandResult(false, "Пожалуйста, введите ссылку"), nil
+	}
+
+	if state.Step == 2 {
 		if len(state.UserArgs) == 0 {
-			return service.NewCommandResult(false, "Пожалуйста, введите команду в виде /track ваша-ссылка"), nil
+			return service.NewCommandResult(false, "Пожалуйста, введите ссылку"), nil
 		}
 		state.Data["link"] = state.UserArgs[0]
-		state.Step = 2
+		state.Step = 3
 		// TODO: check if its already tracked in scrapper
 		return service.NewCommandResult(false, "Пожалуйста, введи теги для вашей ссылки. "+
 			"Введите \"-\" для сохранения без тегов"), nil
 	}
-	if state.Step == 2 {
+	if state.Step == 3 {
 		link := state.Data["link"].(string)
 
 		if state.UserArgs[0] == "-" {
@@ -54,7 +59,7 @@ func (cmd *TrackCommand) Execute(ctx context.Context, state *service.State) (*se
 			case errors.Is(err, model.ErrNotFound):
 				msg = "Чат не существует"
 			case errors.Is(err, model.ErrInvalidRequest):
-				msg = "Неправильное параметры команды. Пожалуйста, введите ссылку"
+				msg = "Неверная или неподдерживаемая ссылка. Введите ссылку с github или stackoverflow"
 			default:
 				msg = "Не удалось начать отслеживать ссылку"
 			}

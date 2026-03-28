@@ -7,5 +7,6 @@ import (
 // TODO: if linkupdater not present, send message to user
 type LinkUpdater interface {
 	FormatLink(link string) (string, error)
+	GetDomain() string
 	GetUpdates(link string) (*model.Update, error)
 }

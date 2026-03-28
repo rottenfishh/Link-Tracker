@@ -8,13 +8,14 @@ import (
 // TODO: это будет manyTomany связь, поэтому по идее вообще субскрайберы будут в отдельной таблице, но пока так
 // TODO: extract model
 type Link struct {
-	Id           int64
-	Link         string    `json:"url"`
-	Domain       string    `json:"model"`
-	Etag         string    `json:"etag,omitempty"`
-	LastModified time.Time `json:"last_modified"`
-	Tags         []string  `json:"tags"`
-	Events       []string  `json:"events"`
+	Id            int64
+	Link          string    `json:"url"`
+	FormattedLink string    `json:"formatted_link"`
+	Domain        string    `json:"model"`
+	Etag          string    `json:"etag,omitempty"`
+	LastModified  time.Time `json:"last_modified"`
+	Tags          []string  `json:"tags"`
+	Events        []string  `json:"events"`
 }
 
 // TODO: print message to user if no updater for this link

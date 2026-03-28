@@ -7,11 +7,12 @@ import (
 )
 
 type ChatService struct {
-	repo out.ChatRepository
+	repo         out.ChatRepository
+	linkResolver *LinkResolver
 }
 
-func NewChatService(repo out.ChatRepository) *ChatService {
-	return &ChatService{repo: repo}
+func NewChatService(repo out.ChatRepository, linkResolver *LinkResolver) *ChatService {
+	return &ChatService{repo: repo, linkResolver: linkResolver}
 }
 
 func (s *ChatService) RegisterChat(id int64) (*model.Chat, error) {
@@ -45,6 +46,10 @@ func (s *ChatService) GetLinksByChatId(id int64) ([]model.Link, error) {
 
 func (s *ChatService) AddLink(chatId int64, req dto.AddLinkRequest) (*model.Link, error) {
 	link := model.NewLink(req.Link, req.Tags)
+	link, err := s.linkResolver.FormatLink(link)
+	if err != nil {
+		return nil, err
+	}
 
 	addedLink, err := s.repo.AddLink(chatId, *link)
 	if err != nil {

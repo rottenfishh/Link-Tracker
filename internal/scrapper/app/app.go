@@ -19,13 +19,16 @@ type App struct {
 }
 
 func NewApp(config *ScrapperAppConfig) (*App, error) {
-
 	repo := out.NewInMemoryRepo()
-	chatService := service.NewChatService(repo)
+
+	trackers := buildTrackers(config)
+	linkResolver := service.NewLinkResolver(trackers)
+
+	chatService := service.NewChatService(repo, linkResolver)
 
 	//router := http.NewServer(":"+config.Port, chatService)
 	grpcServer := grpc.NewScrapperServer(chatService)
-	scheduler, err := buildScheduler(*config, chatService)
+	scheduler, err := buildScheduler(*config, trackers, chatService)
 	if err != nil {
 		return nil, fmt.Errorf("error while building scheduler %v", err)
 	}
@@ -48,17 +51,23 @@ func (a *App) Run() error {
 	return nil
 }
 
-func buildScheduler(config ScrapperAppConfig, chatService *service.ChatService) (*service.Scheduler, error) {
+func buildTrackers(config *ScrapperAppConfig) []service.LinkUpdater {
 	github := service.NewGithubClient(config.GithubToken)
 	stackOF := service.NewStackOverflowClient(config.StackOFToken)
+	res := []service.LinkUpdater{github, stackOF}
+	return res
+}
+
+func buildScheduler(config ScrapperAppConfig, trackers []service.LinkUpdater, chatService *service.ChatService) (*service.Scheduler, error) {
 	notifier := http2.NewBotHttpNotifier(config.BotUrl)
 
 	scheduler, err := service.NewScheduler(notifier, chatService)
 	if err != nil {
 		return nil, fmt.Errorf("error while building scheduler %v", err)
 	}
-	scheduler.RegisterUpdater("github", github)
-	scheduler.RegisterUpdater("stackof", stackOF)
+	for _, tracker := range trackers {
+		scheduler.RegisterUpdater(tracker.GetDomain(), tracker)
+	}
 
 	return scheduler, nil
 }

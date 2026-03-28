@@ -19,6 +19,10 @@ type StackOverflowClient struct {
 	token  string
 }
 
+func (c *StackOverflowClient) GetDomain() string {
+	return "stackof"
+}
+
 func NewStackOverflowClient(token string) *StackOverflowClient {
 	return &StackOverflowClient{http.DefaultClient, token}
 }
