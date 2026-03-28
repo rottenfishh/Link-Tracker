@@ -44,6 +44,10 @@ func (c *StackOverflowClient) FormatLink(link string) (string, error) {
 }
 
 func (c *StackOverflowClient) GetUpdates(link string) (*model.Update, error) {
+	link, err := c.FormatLink(link)
+	if err != nil {
+		return nil, err
+	}
 	req, err := http.NewRequest("GET", link, nil)
 	if err != nil {
 		return nil, err

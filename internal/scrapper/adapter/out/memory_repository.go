@@ -77,7 +77,7 @@ func (r *InMemoryRepo) DeleteLink(chatId int64, linkName string) (*model.Link, e
 	if !ok {
 		return nil, model.ErrNotFound
 	}
-	var idx int
+	idx := -1
 	var linkDeleted model.Link
 	for index, link := range r.Chats[chatId].Links {
 		if link.Link == linkName {
@@ -86,6 +86,10 @@ func (r *InMemoryRepo) DeleteLink(chatId int64, linkName string) (*model.Link, e
 			break
 		}
 	}
+	if idx == -1 {
+		return nil, model.ErrNotFound
+	}
+
 	r.Chats[chatId].Links = append(r.Chats[chatId].Links[:idx], r.Chats[chatId].Links[idx+1:]...)
 
 	return &linkDeleted, nil

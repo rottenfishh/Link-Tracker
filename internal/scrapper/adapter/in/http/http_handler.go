@@ -29,6 +29,7 @@ func (h *HttpHandler) RegisterChat(c *gin.Context) {
 	if err != nil {
 		errResp := dto.NewRequestParsingError(err)
 		c.JSON(http.StatusBadRequest, errResp)
+		return
 	}
 
 	chat, err := h.service.RegisterChat(idInt)
@@ -37,6 +38,7 @@ func (h *HttpHandler) RegisterChat(c *gin.Context) {
 		message := "Error saving chat"
 		errResp := dto.NewServiceError(message, err, code)
 		c.IndentedJSON(http.StatusInternalServerError, errResp)
+		return
 	}
 
 	c.IndentedJSON(http.StatusOK, *chat)
@@ -49,6 +51,7 @@ func (h *HttpHandler) DeleteChat(c *gin.Context) {
 	if err != nil {
 		errResp := dto.NewRequestParsingError(err)
 		c.JSON(http.StatusBadRequest, errResp)
+		return
 	}
 
 	err = h.service.DeleteChat(idInt)
@@ -57,6 +60,7 @@ func (h *HttpHandler) DeleteChat(c *gin.Context) {
 		message := "Error deleting chat"
 		errResp := dto.NewServiceError(message, err, code)
 		c.JSON(http.StatusInternalServerError, errResp)
+		return
 	}
 	c.IndentedJSON(http.StatusOK, gin.H{"id": id})
 }
@@ -80,12 +84,13 @@ func (h *HttpHandler) GetLinksByChatId(c *gin.Context) {
 		return
 	}
 
-	linkResp := make([]dto.LinkResponse, len(links))
+	linkResp := make([]dto.LinkResponse, 0)
 	for _, link := range links {
 		linkResp = append(linkResp, *dto.ToLinkResponse(link))
 	}
 
-	c.IndentedJSON(http.StatusOK, linkResp)
+	resp := dto.ListLinksResponse{Links: linkResp}
+	c.IndentedJSON(http.StatusOK, resp)
 }
 
 func (h *HttpHandler) AddLink(c *gin.Context) {
