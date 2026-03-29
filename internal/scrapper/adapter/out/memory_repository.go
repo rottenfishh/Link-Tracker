@@ -42,6 +42,24 @@ func (r *InMemoryRepo) GetLinksById(chatId int64) ([]model.Link, error) {
 	return links, nil
 }
 
+func (r *InMemoryRepo) GetFilteredLinksByTag(chatId int64, tag string) ([]model.Link, error) {
+	item, ok := r.Chats[chatId]
+	if !ok {
+		return []model.Link{}, model.ErrNotFound
+	}
+
+	result := make([]model.Link, 0, len(item.Links))
+	for _, link := range item.Links {
+		for _, tagLink := range link.Tags {
+			if tagLink == tag {
+				result = append(result, link)
+				break
+			}
+		}
+	}
+	return result, nil
+}
+
 func (r *InMemoryRepo) AddLink(chatId int64, link model.Link) (*model.Link, error) {
 	_, ok := r.Chats[chatId]
 	if !ok {

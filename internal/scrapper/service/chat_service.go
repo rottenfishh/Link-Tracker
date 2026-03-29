@@ -44,6 +44,14 @@ func (s *ChatService) GetLinksByChatId(id int64) ([]model.Link, error) {
 	return links, err
 }
 
+func (s *ChatService) GetLinksByChatIdAndTag(id int64, tag string) ([]model.Link, error) {
+	if tag != "" {
+		return s.repo.GetFilteredLinksByTag(id, tag)
+	} else {
+		return s.repo.GetLinksById(id)
+	}
+}
+
 func (s *ChatService) AddLink(chatId int64, req dto.AddLinkRequest) (*model.Link, error) {
 	link := model.NewLink(req.Link, req.Tags)
 	link, err := s.linkResolver.FormatLink(link)

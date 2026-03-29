@@ -74,8 +74,9 @@ func (h *HttpHandler) GetLinksByChatId(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errResp)
 		return
 	}
+	tag := c.Query("tag")
 
-	links, err := h.service.GetLinksByChatId(idInt)
+	links, err := h.service.GetLinksByChatIdAndTag(idInt, tag)
 	if err != nil {
 		code := parseServerCode(err)
 		message := "Error getting links"
@@ -90,6 +91,8 @@ func (h *HttpHandler) GetLinksByChatId(c *gin.Context) {
 	}
 
 	resp := dto.ListLinksResponse{Links: linkResp}
+	resp.Size = len(linkResp)
+
 	c.IndentedJSON(http.StatusOK, resp)
 }
 

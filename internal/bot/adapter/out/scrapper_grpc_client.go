@@ -48,8 +48,8 @@ func (c *ScrapperGrpcClient) DeleteLink(ctx context.Context, request dto.DeleteL
 	return nil
 }
 
-func (c *ScrapperGrpcClient) GetLinks(ctx context.Context, chatID int64) ([]dto.LinkResponse, error) {
-	links, err := c.ScrapperServiceClient.GetLinksByChatID(ctx, mapper.ToProtoChatID(chatID))
+func (c *ScrapperGrpcClient) GetLinks(ctx context.Context, chatID int64, tag string) ([]dto.LinkResponse, error) {
+	links, err := c.ScrapperServiceClient.GetLinksByChatID(ctx, mapper.ToProtoGetLinksReq(chatID, tag))
 	if err != nil {
 		return nil, err
 	}

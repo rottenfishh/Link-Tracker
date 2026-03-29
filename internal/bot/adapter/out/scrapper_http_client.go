@@ -132,8 +132,11 @@ func (c *ScrapperHttpClient) DeleteLink(ctx context.Context, chatID int64, link 
 	return nil
 }
 
-func (c *ScrapperHttpClient) GetLinks(ctx context.Context, chatID int64) (*dto.ListLinksResponse, error) {
+func (c *ScrapperHttpClient) GetLinks(ctx context.Context, chatID int64, tag string) (*dto.ListLinksResponse, error) {
 	urlPath := c.url + "/links/" + strconv.FormatInt(chatID, 10)
+	if tag != "" {
+		urlPath += "?tag=" + tag
+	}
 
 	req, err := http.NewRequest("GET", urlPath, nil)
 	if err != nil {

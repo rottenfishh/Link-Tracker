@@ -56,8 +56,8 @@ func (s *ScrapperServer) DeleteChat(ctx context.Context, chatID *pb.ChatID) (*pb
 	return &pb.ChatResponse{Message: "Chat successfully deleted"}, nil
 }
 
-func (s *ScrapperServer) GetLinksByChatID(ctx context.Context, chatID *pb.ChatID) (*pb.ListLinkResponse, error) {
-	links, err := s.chatService.GetLinksByChatId(chatID.Id)
+func (s *ScrapperServer) GetLinksByChatID(ctx context.Context, req *pb.GetLinksReq) (*pb.ListLinkResponse, error) {
+	links, err := s.chatService.GetLinksByChatIdAndTag(req.Id, req.Tag)
 	if err != nil {
 		code := parseServerCode(err)
 		return nil, status.Errorf(code, "failed to get links: %v", err)

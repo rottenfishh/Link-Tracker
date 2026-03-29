@@ -11,6 +11,7 @@ type ChatRepository interface {
 	GetChats() ([]model.Chat, error)
 	DeleteChat(chatId int64) error
 	GetLinksById(chatId int64) ([]model.Link, error)
+	GetFilteredLinksByTag(chatId int64, tag string) ([]model.Link, error)
 	AddLink(chatId int64, link model.Link) (*model.Link, error)
 	UpdateLink(chatId int64, link model.Link) (*model.Link, error)
 	DeleteLink(chatId int64, linkName string) (*model.Link, error)

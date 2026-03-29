@@ -12,5 +12,5 @@ type ScrapperClient interface {
 	DeleteChat(ctx context.Context, chatID int64) error
 	RegisterLink(ctx context.Context, chatID int64, request dto.AddLinkRequest) error
 	DeleteLink(ctx context.Context, chatID int64, link dto.DeleteLinkRequest) error
-	GetLinks(ctx context.Context, chatID int64) (*dto.ListLinksResponse, error)
+	GetLinks(ctx context.Context, chatID int64, tag string) (*dto.ListLinksResponse, error)
 }

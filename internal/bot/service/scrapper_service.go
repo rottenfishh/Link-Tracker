@@ -35,8 +35,8 @@ func (s *ScrapperService) DeleteLink(ctx context.Context, chatID int64, link str
 	return nil
 }
 
-func (s *ScrapperService) GetLinks(ctx context.Context, chatID int64) (*dto.ListLinksResponse, error) {
-	links, err := s.scrapperClient.GetLinks(ctx, chatID)
+func (s *ScrapperService) GetLinks(ctx context.Context, chatID int64, tag string) (*dto.ListLinksResponse, error) {
+	links, err := s.scrapperClient.GetLinks(ctx, chatID, tag)
 	if err != nil {
 		return nil, err
 	}

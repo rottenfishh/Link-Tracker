@@ -21,15 +21,25 @@ func (cmd *ListCommand) Description() string {
 }
 
 func (cmd *ListCommand) Execute(ctx context.Context, state *service.State) (*service.CommandResult, error) {
-	list, err := cmd.ScrapperService.GetLinks(ctx, state.ChatId)
+	var tag string
+	if len(state.UserArgs) > 0 {
+		tag = state.UserArgs[0]
+	}
+
+	list, err := cmd.ScrapperService.GetLinks(ctx, state.ChatId, tag)
 	if err != nil {
 		slog.Error("Error getting links for chat", "id", state.ChatId, "error", err)
 		return service.NewCommandResult(true, "Не удалось получить ссылки"), nil
 	}
+
 	slog.Debug("Got links for chat", "id", state.ChatId, "links", list)
 	var res strings.Builder
 	for _, link := range list.Links {
-		res.WriteString(link.Link + "\n")
+		res.WriteString(link.Link + " : ")
+		for _, linkTag := range link.Tags {
+			res.WriteString(linkTag + " ")
+		}
+		res.WriteString("\n")
 	}
 
 	if len(list.Links) == 0 || res.String() == "\n" {

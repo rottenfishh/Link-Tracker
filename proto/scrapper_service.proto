@@ -17,7 +17,7 @@ service ScrapperService {
       delete: "/tg-chat/{id}"
     };
   }
-  rpc GetLinksByChatID(ChatID) returns (ListLinkResponse){
+  rpc GetLinksByChatID(GetLinksReq) returns (ListLinkResponse){
     option (google.api.http) = {
       get: "/links/{id}"
     };
@@ -39,6 +39,11 @@ message ChatID {
   int64 id = 1;
 }
 
+message GetLinksReq {
+  int64 id = 1;
+  string tag = 2;
+
+}
 message ChatResponse {
   string message = 1;
 }

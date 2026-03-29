@@ -52,6 +52,10 @@ func ToProtoChatID(chatID int64) *scrapper.ChatID {
 	return &scrapper.ChatID{Id: chatID}
 }
 
+func ToProtoGetLinksReq(chatID int64, tag string) *scrapper.GetLinksReq {
+	return &scrapper.GetLinksReq{Id: chatID, Tag: tag}
+}
+
 func ToProtoAddLinkRequest(req *dto.AddLinkRequest) *scrapper.AddLinkRequest {
 	return &scrapper.AddLinkRequest{
 		Link: req.Link,
