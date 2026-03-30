@@ -20,5 +20,10 @@ func (cmd *HelpCommand) Description() string {
 func (cmd *HelpCommand) Execute(ctx context.Context, state *state.State) (*CommandResult, error) {
 	return NewCommandResult(true, "Доступные в боте команды:\n"+
 		"/start - начать работу\n"+
-		"/help - справка по боту"), nil
+		"/help - справка по боту"+
+		"/track - отслеживать ссылку"+
+		"/untrack <link> - перестать отслеживать ссылку"+
+		"/list - посмотреть свои отслеживаемые ссылки"+
+		"/cancel - отменить текущую команду"), nil
+
 }
