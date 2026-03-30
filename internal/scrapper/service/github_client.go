@@ -67,6 +67,12 @@ func (c *GithubClient) GetUpdates(link string) (*model.Update, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if result.StatusCode != http.StatusOK {
+		slog.Error("Error getting updates", "unexpected status code", result.Status)
+		return nil, fmt.Errorf("unexpected status code: %d", result.StatusCode)
+	}
+
 	timeModified, err := parseTime(result.Header.Get("last-modified"))
 	if err != nil {
 		return nil, err

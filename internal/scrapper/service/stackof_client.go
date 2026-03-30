@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -62,10 +63,17 @@ func (c *StackOverflowClient) GetUpdates(link string) (*model.Update, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if resp.StatusCode != http.StatusOK {
+		slog.Error("Error getting updates", "unexpected status code", resp.Status)
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
 	var answer StackAnswer
 	if err = json.NewDecoder(resp.Body).Decode(&answer); err != nil {
 		return nil, err
 	}
+
 	if len(answer.Items) == 0 {
 		return nil, fmt.Errorf("no updates found")
 	}
