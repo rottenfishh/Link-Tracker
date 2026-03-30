@@ -61,8 +61,13 @@ func (c *ScrapperHttpClient) DeleteChat(ctx context.Context, chatID int64) error
 	return nil
 }
 
-func (c *ScrapperHttpClient) RegisterLink(ctx context.Context, chatID int64, request dto.AddLinkRequest) error {
+func (c *ScrapperHttpClient) RegisterLink(ctx context.Context, chatID int64, link string, tags []string) error {
 	urlPath := c.url + "/links/" + strconv.FormatInt(chatID, 10)
+
+	request := dto.AddLinkRequest{
+		Link: link,
+		Tags: tags,
+	}
 
 	body, err := json.Marshal(request)
 	if err != nil {
@@ -101,10 +106,11 @@ func (c *ScrapperHttpClient) RegisterLink(ctx context.Context, chatID int64, req
 	return nil
 }
 
-func (c *ScrapperHttpClient) DeleteLink(ctx context.Context, chatID int64, link dto.DeleteLinkRequest) error {
+func (c *ScrapperHttpClient) DeleteLink(ctx context.Context, chatID int64, link string) error {
 	urlPath := c.url + "/links/" + strconv.FormatInt(chatID, 10)
 
-	body, err := json.Marshal(link)
+	deleteReq := dto.DeleteLinkRequest{link}
+	body, err := json.Marshal(deleteReq)
 	if err != nil {
 		return err
 	}

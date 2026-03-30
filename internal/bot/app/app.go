@@ -25,9 +25,8 @@ type App struct {
 
 func NewApp(cfg *AppConfig) *App {
 	scrapper := out.NewScrapperClient(cfg.ScrapperUrl)
-	scrapperService := service.NewScrapperService(scrapper)
 
-	dispatcher := BuildDispatcher(scrapperService)
+	dispatcher := BuildDispatcher(scrapper)
 	adapter := in.NewTgAdapter(cfg.Telegram.Token, cfg.Telegram.Debug)
 
 	slog.Info("Finished setting up service")
@@ -110,13 +109,13 @@ func (a *App) processLinkUpdate(ctx context.Context, update model.LinkUpdate) er
 	return nil
 }
 
-func BuildDispatcher(scrapperService *service.ScrapperService) *service.Dispatcher {
+func BuildDispatcher(scrapperClient commands.ScrapperClient) *service.Dispatcher {
 	help := &commands.HelpCommand{}
-	start := &commands.StartCommand{ScrapperService: scrapperService}
+	start := commands.NewStartCommand(scrapperClient)
 	fallback := &commands.FallBackCommand{}
-	track := &commands.TrackCommand{ScrapperService: scrapperService}
-	untrack := &commands.UntrackCommand{ScrapperService: scrapperService}
-	list := &commands.ListCommand{ScrapperService: scrapperService}
+	track := commands.NewTrackCommand(scrapperClient)
+	untrack := commands.NewUntrackCommand(scrapperClient)
+	list := commands.NewListCommand(scrapperClient)
 	cancel := &commands.CancelCommand{}
 
 	cmds := []service.Command{help, start, fallback, track, untrack, list, cancel}

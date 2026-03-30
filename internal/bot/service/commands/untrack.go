@@ -5,12 +5,18 @@ import (
 	"errors"
 	"log/slog"
 
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/service"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/service/state"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
 )
 
 type UntrackCommand struct {
-	ScrapperService *service.ScrapperService
+	ScrapperClient ScrapperClient
+}
+
+func NewUntrackCommand(scrapperClient ScrapperClient) *UntrackCommand {
+	return &UntrackCommand{
+		ScrapperClient: scrapperClient,
+	}
 }
 
 func (cmd *UntrackCommand) Name() string {
@@ -21,12 +27,12 @@ func (cmd *UntrackCommand) Description() string {
 	return "Command to stop following events from a given link"
 }
 
-func (cmd *UntrackCommand) Execute(ctx context.Context, state *service.State) (*service.CommandResult, error) {
+func (cmd *UntrackCommand) Execute(ctx context.Context, state *state.State) (*CommandResult, error) {
 	if len(state.UserArgs) == 0 {
-		return service.NewCommandResult(true, "You need to provide a link to untrack"), nil
+		return NewCommandResult(true, "You need to provide a link to untrack"), nil
 	}
 
-	err := cmd.ScrapperService.DeleteLink(ctx, state.ChatId, state.UserArgs[0])
+	err := cmd.ScrapperClient.DeleteLink(ctx, state.ChatId, state.UserArgs[0])
 	if err != nil {
 		var msg string
 		slog.Error("Unregistering link error ", "chatId", state.ChatId, "link", state.UserArgs[0], "error", err)
@@ -36,7 +42,7 @@ func (cmd *UntrackCommand) Execute(ctx context.Context, state *service.State) (*
 		case errors.Is(err, model.ErrInvalidRequest):
 			msg = "Некорректные параметры запроса"
 		}
-		return service.NewCommandResult(true, msg), nil
+		return NewCommandResult(true, msg), nil
 	}
-	return service.NewCommandResult(true, "Successfully stopped tracking a given link"), nil
+	return NewCommandResult(true, "Successfully stopped tracking a given link"), nil
 }

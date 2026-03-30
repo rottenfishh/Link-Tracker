@@ -34,12 +34,12 @@ func TestServerCorrectAndIncorrectTrack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp, err := http.Post("http://127.0.0.1:8080/update", "application/json", bytes.NewBuffer(body))
+	resp, err := http.Post("http://127.0.0.1:8080/updates", "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		t.Fatal(err)
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
 	}
 
 	updateWrong := "buba"
@@ -47,11 +47,11 @@ func TestServerCorrectAndIncorrectTrack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp, err = http.Post("http://127.0.0.1:8080/update", "application/json", bytes.NewBuffer(body))
+	resp, err = http.Post("http://127.0.0.1:8080/updates", "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatal(err)
+		t.Fatalf("expected 400, got %d", resp.StatusCode)
 	}
 }

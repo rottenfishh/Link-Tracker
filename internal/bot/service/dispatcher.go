@@ -6,16 +6,17 @@ import (
 	"log/slog"
 	"strings"
 
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/service/state"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
 )
 
 type Dispatcher struct {
 	cmds      map[string]Command
-	chatCache map[int64]*State
+	chatCache map[int64]*state.State
 }
 
 func NewDispatcher() *Dispatcher {
-	d := &Dispatcher{cmds: make(map[string]Command), chatCache: make(map[int64]*State)}
+	d := &Dispatcher{cmds: make(map[string]Command), chatCache: make(map[int64]*state.State)}
 	return d
 }
 
@@ -62,13 +63,13 @@ func (r *Dispatcher) Dispatch(ctx context.Context, userMessage string, chatId in
 		return nil, err
 	}
 
-	if answerMsg.IsFinished {
+	if answerMsg.IsFinished() {
 		delete(r.chatCache, chatId)
 	}
 	return answerMsg.Message, nil
 }
 
-func (r *Dispatcher) getStateForChat(chatId int64, userArgs []string) (*State, error) {
+func (r *Dispatcher) getStateForChat(chatId int64, userArgs []string) (*state.State, error) {
 	if strings.HasPrefix(userArgs[0], "/") {
 		_, ok := r.cmds[userArgs[0]]
 		if !ok {
@@ -77,7 +78,7 @@ func (r *Dispatcher) getStateForChat(chatId int64, userArgs []string) (*State, e
 
 		slog.Debug("Starting new dialogue with user ", "chat id ", chatId)
 
-		newState := NewState(chatId, userArgs[0])
+		newState := state.NewState(chatId, userArgs[0])
 		newState.UserArgs = userArgs[1:]
 		r.chatCache[chatId] = newState
 

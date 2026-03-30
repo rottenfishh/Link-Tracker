@@ -72,8 +72,7 @@ func (s *Scheduler) updateLinks(chat model.Chat) error {
 		}
 
 		if update.LastModified.After(link.LastModified) {
-			slog.Info("KILL MYSELF")
-			slog.Info("Updating ", link.Link, "time", link.LastModified.String(), " to ", update.LastModified)
+			slog.Info("Updating ", link.Link, "time", link.LastModified, " to ", update.LastModified)
 			chats := []int64{chat.Id}
 			upd := model.NewLinkUpdate(1, link.Link, "New event from given link", chats)
 			err = s.notifier.SendUpdate(context.Background(), *upd)

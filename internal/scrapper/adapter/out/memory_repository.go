@@ -20,6 +20,10 @@ func (r *InMemoryRepo) SaveChat(chat *model.Chat) error {
 }
 
 func (r *InMemoryRepo) DeleteChat(chatId int64) error {
+	_, ok := r.Chats[chatId]
+	if !ok {
+		return model.ErrNotFound
+	}
 	delete(r.Chats, chatId)
 	return nil
 }
@@ -80,6 +84,7 @@ func (r *InMemoryRepo) AddLink(chatId int64, link model.Link) (*model.Link, erro
 func (r *InMemoryRepo) UpdateLink(chatId int64, link model.Link) (*model.Link, error) {
 	_, ok := r.Chats[chatId]
 	if !ok {
+		slog.Error("chat not found")
 		return nil, model.ErrNotFound
 	}
 	for i, savedLink := range r.Chats[chatId].Links {

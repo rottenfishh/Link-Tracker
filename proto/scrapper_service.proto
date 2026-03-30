@@ -31,6 +31,7 @@ service ScrapperService {
   rpc DeleteLink(RemoveLinkRequest) returns (LinkResponse){
     option (google.api.http) = {
       delete: "/links/{chatID}"
+      body: "*"
     };
   }
 }

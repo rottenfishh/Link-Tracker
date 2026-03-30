@@ -6,13 +6,17 @@ import (
 	"fmt"
 	"log/slog"
 
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/service"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/service/state"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
 )
 
 // т.н. dependency injection
 type TrackCommand struct {
-	ScrapperService *service.ScrapperService
+	ScrapperClient ScrapperClient
+}
+
+func NewTrackCommand(scrapperClient ScrapperClient) *TrackCommand {
+	return &TrackCommand{ScrapperClient: scrapperClient}
 }
 
 func (cmd *TrackCommand) Name() string {
@@ -26,20 +30,20 @@ func (cmd *TrackCommand) Description() string {
 // TODO: inline buttons for skipping tags
 // get link. after that adapter sets flag for start of state machine(int ctx, for example)
 // . if flag is set, accept args as tags. /cancel is processed in adapter, and sent to this cmmand to. if its sent, we save stuff
-func (cmd *TrackCommand) Execute(ctx context.Context, state *service.State) (*service.CommandResult, error) {
+func (cmd *TrackCommand) Execute(ctx context.Context, state *state.State) (*CommandResult, error) {
 	if state.Step == 1 {
 		state.Step = 2
-		return service.NewCommandResult(false, "Пожалуйста, введите ссылку"), nil
+		return NewCommandResult(false, "Пожалуйста, введите ссылку"), nil
 	}
 
 	if state.Step == 2 {
 		if len(state.UserArgs) == 0 {
-			return service.NewCommandResult(false, "Пожалуйста, введите ссылку"), nil
+			return NewCommandResult(false, "Пожалуйста, введите ссылку"), nil
 		}
 		state.Data["link"] = state.UserArgs[0]
 		state.Step = 3
 		// TODO: check if its already tracked in scrapper
-		return service.NewCommandResult(false, "Пожалуйста, введи теги для вашей ссылки. "+
+		return NewCommandResult(false, "Пожалуйста, введи теги для вашей ссылки. "+
 			"Введите \"-\" для сохранения без тегов"), nil
 	}
 	if state.Step == 3 {
@@ -49,7 +53,7 @@ func (cmd *TrackCommand) Execute(ctx context.Context, state *service.State) (*se
 			state.UserArgs = nil
 		}
 
-		err := cmd.ScrapperService.AddLink(ctx, state.ChatId, link, state.UserArgs)
+		err := cmd.ScrapperClient.RegisterLink(ctx, state.ChatId, link, state.UserArgs)
 		if err != nil {
 			slog.Error("Registering link error ", "link", link, "error", err)
 			var msg string
@@ -63,11 +67,11 @@ func (cmd *TrackCommand) Execute(ctx context.Context, state *service.State) (*se
 			default:
 				msg = "Не удалось начать отслеживать ссылку"
 			}
-			return service.NewCommandResult(true, msg), nil
+			return NewCommandResult(true, msg), nil
 		}
 
-		return service.NewCommandResult(true, "Успешно начали отслеживание ссылки "+link), nil
+		return NewCommandResult(true, "Успешно начали отслеживание ссылки "+link), nil
 	}
 
-	return service.NewCommandResult(true, "Неизвестная команда"), fmt.Errorf("unknown command %v", state.UserArgs)
+	return NewCommandResult(true, "Неизвестная команда"), fmt.Errorf("unknown command %v", state.UserArgs)
 }

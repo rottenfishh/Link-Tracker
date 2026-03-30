@@ -1,4 +1,4 @@
-package service
+package state
 
 type State struct {
 	ChatId       int64

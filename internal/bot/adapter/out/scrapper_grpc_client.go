@@ -30,8 +30,12 @@ func (c *ScrapperGrpcClient) DeleteChat(ctx context.Context, chatID int64) error
 	return nil
 }
 
-func (c *ScrapperGrpcClient) RegisterLink(ctx context.Context, request dto.AddLinkRequest) error {
-	req := mapper.ToProtoAddLinkRequest(&request)
+func (c *ScrapperGrpcClient) RegisterLink(ctx context.Context, chatID int64, link string, tags []string) error {
+	request := dto.AddLinkRequest{
+		Link: link,
+		Tags: tags,
+	}
+	req := mapper.ToProtoAddLinkRequest(chatID, &request)
 	_, err := c.ScrapperServiceClient.AddLink(ctx, req)
 	if err != nil {
 		return err
@@ -39,8 +43,8 @@ func (c *ScrapperGrpcClient) RegisterLink(ctx context.Context, request dto.AddLi
 	return nil
 }
 
-func (c *ScrapperGrpcClient) DeleteLink(ctx context.Context, request dto.DeleteLinkRequest) error {
-	req := mapper.ToProtoDeleteLinkRequest(&request)
+func (c *ScrapperGrpcClient) DeleteLink(ctx context.Context, chatID int64, link string) error {
+	req := mapper.ToProtoDeleteLinkRequest(chatID, link)
 	_, err := c.ScrapperServiceClient.DeleteLink(ctx, req)
 	if err != nil {
 		return err
@@ -48,7 +52,7 @@ func (c *ScrapperGrpcClient) DeleteLink(ctx context.Context, request dto.DeleteL
 	return nil
 }
 
-func (c *ScrapperGrpcClient) GetLinks(ctx context.Context, chatID int64, tag string) ([]dto.LinkResponse, error) {
+func (c *ScrapperGrpcClient) GetLinks(ctx context.Context, chatID int64, tag string) (*dto.ListLinksResponse, error) {
 	links, err := c.ScrapperServiceClient.GetLinksByChatID(ctx, mapper.ToProtoGetLinksReq(chatID, tag))
 	if err != nil {
 		return nil, err
@@ -57,5 +61,10 @@ func (c *ScrapperGrpcClient) GetLinks(ctx context.Context, chatID int64, tag str
 	for _, link := range links.Links {
 		linksResp = append(linksResp, *mapper.ToDomainLinkResponse(link))
 	}
-	return linksResp, nil
+
+	resp := dto.ListLinksResponse{
+		Links: linksResp,
+		Size:  len(linksResp),
+	}
+	return &resp, nil
 }

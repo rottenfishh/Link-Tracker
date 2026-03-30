@@ -3,181 +3,212 @@ package in
 import (
 	"bytes"
 	"encoding/json"
-	"log/slog"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/dto"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/in/grpc"
+	grpcin "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/in/grpc"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/service"
 )
 
 const baseURL = "http://127.0.0.1:8082"
 
+var chatSeq int64 = 1000
+
+func nextChatID() int64 {
+	return atomic.AddInt64(&chatSeq, 1)
+}
+
 func TestMain(m *testing.M) {
-	chatService := service.NewChatService(out.NewInMemoryRepo())
-	server := grpc.NewScrapperServer(chatService)
+	repo := out.NewInMemoryRepo()
+
+	trackers := []service.LinkUpdater{
+		service.NewGithubClient("mock-token"),
+		service.NewStackOverflowClient("mock-token"),
+	}
+	linkResolver := service.NewLinkResolver(trackers)
+	chatService := service.NewChatService(repo, linkResolver)
+
+	server := grpcin.NewScrapperServer(chatService)
 
 	go func() {
-		err := server.RunServer("8085", "8082")
-		if err != nil {
-			slog.Error("Error starting server:", "error", err)
-		}
+		_ = server.RunServer("8085", "8082")
 	}()
-	time.Sleep(2000 * time.Millisecond)
-	m.Run()
+
+	time.Sleep(2 * time.Second)
+
+	code := m.Run()
+	os.Exit(code)
 }
 
 func TestAddAndGetLink(t *testing.T) {
-	resp, err := postJSON(baseURL+"/tg-chat/1", nil)
-	if err != nil {
-		t.Error(err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("expected 200 OK, got %d", resp.StatusCode)
+	chatID := nextChatID()
+
+	resp, err := postJSON(fmt.Sprintf("%s/tg-chat/%d", baseURL, chatID), nil)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	addReq := dto.AddLinkRequest{
+		Link: "https://github.com/golang/go",
+		Tags: []string{"go", "lang"},
 	}
 
-	addLinkRequest := dto.AddLinkRequest{
-		Link: "bubblegum.com",
-		Tags: nil,
-	}
-	resp, err = postJSON(baseURL+"/links/1", addLinkRequest)
-	if err != nil {
-		t.Error(err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("expected 200 OK, got %d", resp.StatusCode)
-	}
+	resp, err = postJSON(fmt.Sprintf("%s/links/%d", baseURL, chatID), addReq)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	resp, err = http.Get(baseURL + "/links/1")
-	if err != nil {
-		t.Error(err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("expected 200 OK, got %d", resp.StatusCode)
-	}
-	if resp.Body == nil {
-		t.Errorf("expected non-nil body")
-	}
+	resp, err = http.Get(fmt.Sprintf("%s/links/%d", baseURL, chatID))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var linksResp dto.ListLinksResponse
+	err = decodeJSON(resp, &linksResp)
+	require.NoError(t, err)
+	require.Len(t, linksResp.Links, 1)
+	require.Equal(t, "https://github.com/golang/go", linksResp.Links[0].Link)
 }
 
 func TestAddAndDeleteLink(t *testing.T) {
-	response, err := postJSON(baseURL+"/tg-chat/1", nil)
-	if err != nil {
-		t.Error(err)
-	}
-	if response.StatusCode != http.StatusOK {
-		t.Errorf("expected 200 OK, got %d", response.StatusCode)
-	}
+	chatID := nextChatID()
+
+	resp, err := postJSON(fmt.Sprintf("%s/tg-chat/%d", baseURL, chatID), nil)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	addReq := dto.AddLinkRequest{
-		Link: "bubblegum.com",
+		Link: "https://github.com/golang/go",
 		Tags: nil,
 	}
-	resp, _ := postJSON(baseURL+"/links/1", addReq)
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("add link failed")
-	}
+	resp, err = postJSON(fmt.Sprintf("%s/links/%d", baseURL, chatID), addReq)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	delReq := dto.DeleteLinkRequest{
-		Link: "bubblegum.com",
+		Link: "https://github.com/golang/go",
 	}
-	resp, _ = deleteJSON(baseURL+"/links/1", delReq)
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("delete link failed")
-	}
+	resp, err = deleteJSON(fmt.Sprintf("%s/links/%d", baseURL, chatID), delReq)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	resp, _ = http.Get(baseURL + "/links/1")
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("get links failed")
-	}
+	resp, err = http.Get(fmt.Sprintf("%s/links/%d", baseURL, chatID))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var linksResp dto.ListLinksResponse
+	err = decodeJSON(resp, &linksResp)
+	require.NoError(t, err)
+	require.Len(t, linksResp.Links, 0)
 }
 
 func TestDeleteLinkFromNonExistingChat(t *testing.T) {
-	response, err := postJSON(baseURL+"/tg-chat/1", nil)
-	if err != nil {
-		t.Error(err)
-	}
-	if response.StatusCode != http.StatusOK {
-		t.Errorf("expected 200 OK, got %d", response.StatusCode)
-	}
-
-	addReq := dto.AddLinkRequest{
-		Link: "bubblegum.com",
-		Tags: nil,
-	}
-	resp, _ := postJSON(baseURL+"/links/1", addReq)
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("add link failed")
-	}
+	chatID := nextChatID()
 
 	delReq := dto.DeleteLinkRequest{
-		Link: "bubblegum.com",
+		Link: "https://github.com/golang/go",
 	}
 
-	resp, _ = deleteJSON(baseURL+"/links/999", delReq)
-	if resp.StatusCode == http.StatusOK {
-		t.Errorf("expected non-200 status")
-	}
-
-	resp, _ = http.Get(baseURL + "/links/1")
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("get links failed")
-	}
-	if resp.Body == nil {
-		t.Errorf("expected non-nil body")
-	}
+	resp, err := deleteJSON(fmt.Sprintf("%s/links/%d", baseURL, chatID), delReq)
+	require.NoError(t, err)
+	require.NotEqual(t, http.StatusOK, resp.StatusCode)
 }
 
-// 3.4 Добавление ссылки в несуществующий чат
 func TestAddLinkToNonExistingChat(t *testing.T) {
-	response, err := postJSON(baseURL+"/tg-chat/1", nil)
-	if err != nil {
-		t.Error(err)
-	}
-	if response.StatusCode != http.StatusOK {
-		t.Errorf("expected 200 OK, got %d", response.StatusCode)
-	}
+	chatID := nextChatID()
 
 	addReq := dto.AddLinkRequest{
-		Link: "bubblegum.com",
+		Link: "https://github.com/golang/go",
 		Tags: nil,
 	}
-	resp, _ := postJSON(baseURL+"/links/2", addReq)
-	if resp.StatusCode == http.StatusOK {
-		t.Errorf("expected non-200 status")
-	}
+
+	resp, err := postJSON(fmt.Sprintf("%s/links/%d", baseURL, chatID), addReq)
+	require.NoError(t, err)
+	require.NotEqual(t, http.StatusOK, resp.StatusCode)
 }
 
-// 3.5 Работа с удалённым чатом
 func TestDeletedChatBehaviour(t *testing.T) {
-	_, err := postJSON(baseURL+"/tg-chat/1", nil)
-	if err != nil {
-		t.Errorf("creating chat error: %v", err)
-	}
+	chatID := nextChatID()
 
-	resp, _ := deleteJSON(baseURL+"/tg-chat/1", nil)
-	if resp.StatusCode != http.StatusOK {
-		t.Error("chat delete failed")
-	}
+	resp, err := postJSON(fmt.Sprintf("%s/tg-chat/%d", baseURL, chatID), nil)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	resp, err = deleteJSON(fmt.Sprintf("%s/tg-chat/%d", baseURL, chatID), nil)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	addReq := dto.AddLinkRequest{
-		Link: "bubblegum.com",
+		Link: "https://github.com/golang/go",
 		Tags: nil,
 	}
-	resp, _ = postJSON(baseURL+"/links/1", addReq)
-	if resp.StatusCode == http.StatusOK {
-		t.Errorf("expected error adding link to deleted chat")
-	}
+
+	resp, err = postJSON(fmt.Sprintf("%s/links/%d", baseURL, chatID), addReq)
+	require.NoError(t, err)
+	require.NotEqual(t, http.StatusOK, resp.StatusCode)
 }
 
 func TestDeleteNonExistingChat(t *testing.T) {
-	resp, _ := deleteJSON(baseURL+"/tg-chat/5", nil)
-	if resp.StatusCode != http.StatusNotFound {
-		t.Errorf("expected 404 got %d", resp.StatusCode)
+	chatID := 100
+
+	resp, err := deleteJSON(fmt.Sprintf("%s/tg-chat/%d", baseURL, chatID), nil)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusNotFound, resp.StatusCode)
+}
+
+func TestAddInvalidLink(t *testing.T) {
+	chatID := nextChatID()
+
+	resp, err := postJSON(fmt.Sprintf("%s/tg-chat/%d", baseURL, chatID), nil)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	addReq := dto.AddLinkRequest{
+		Link: "bubblegum.com",
+		Tags: nil,
 	}
+
+	resp, err = postJSON(fmt.Sprintf("%s/links/%d", baseURL, chatID), addReq)
+	require.NoError(t, err)
+	require.NotEqual(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestGetLinksByTag(t *testing.T) {
+	chatID := nextChatID()
+
+	resp, err := postJSON(fmt.Sprintf("%s/tg-chat/%d", baseURL, chatID), nil)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	resp, err = postJSON(fmt.Sprintf("%s/links/%d", baseURL, chatID), dto.AddLinkRequest{
+		Link: "https://github.com/golang/go",
+		Tags: []string{"go"},
+	})
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	resp, err = postJSON(fmt.Sprintf("%s/links/%d", baseURL, chatID), dto.AddLinkRequest{
+		Link: "https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-an-unsorted-array",
+		Tags: []string{"so"},
+	})
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	resp, err = http.Get(fmt.Sprintf("%s/links/%d?tag=go", baseURL, chatID))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var linksResp dto.ListLinksResponse
+	err = decodeJSON(resp, &linksResp)
+	require.NoError(t, err)
+	require.Len(t, linksResp.Links, 1)
+	require.Equal(t, "https://github.com/golang/go", linksResp.Links[0].Link)
 }
 
 func postJSON(url string, body any) (*http.Response, error) {
@@ -191,6 +222,7 @@ func postJSON(url string, body any) (*http.Response, error) {
 	} else {
 		buf = bytes.NewBuffer(nil)
 	}
+
 	return http.Post(url, "application/json", buf)
 }
 
@@ -212,4 +244,17 @@ func deleteJSON(url string, body any) (*http.Response, error) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	return http.DefaultClient.Do(req)
+}
+
+func decodeJSON(resp *http.Response, dst any) error {
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	if len(body) == 0 {
+		return nil
+	}
+	return json.Unmarshal(body, dst)
 }

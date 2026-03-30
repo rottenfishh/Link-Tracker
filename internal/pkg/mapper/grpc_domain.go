@@ -56,15 +56,17 @@ func ToProtoGetLinksReq(chatID int64, tag string) *scrapper.GetLinksReq {
 	return &scrapper.GetLinksReq{Id: chatID, Tag: tag}
 }
 
-func ToProtoAddLinkRequest(req *dto.AddLinkRequest) *scrapper.AddLinkRequest {
+func ToProtoAddLinkRequest(chatID int64, req *dto.AddLinkRequest) *scrapper.AddLinkRequest {
 	return &scrapper.AddLinkRequest{
-		Link: req.Link,
-		Tags: req.Tags,
+		ChatID: chatID,
+		Link:   req.Link,
+		Tags:   req.Tags,
 	}
 }
 
-func ToProtoDeleteLinkRequest(req *dto.DeleteLinkRequest) *scrapper.RemoveLinkRequest {
+func ToProtoDeleteLinkRequest(chatID int64, link string) *scrapper.RemoveLinkRequest {
 	return &scrapper.RemoveLinkRequest{
-		Link: req.Link,
+		ChatID: chatID,
+		Link:   link,
 	}
 }
