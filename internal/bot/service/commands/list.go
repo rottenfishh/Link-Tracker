@@ -5,11 +5,15 @@ import (
 	"log/slog"
 	"strings"
 
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/service"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/service/state"
 )
 
 type ListCommand struct {
-	ScrapperService *service.ScrapperService
+	ScrapperClient ScrapperClient
+}
+
+func NewListCommand(scrapperClient ScrapperClient) *ListCommand {
+	return &ListCommand{scrapperClient}
 }
 
 func (cmd *ListCommand) Name() string {
@@ -20,20 +24,33 @@ func (cmd *ListCommand) Description() string {
 	return "List all tracked events"
 }
 
-func (cmd *ListCommand) Execute(ctx context.Context, state *service.State) (*service.CommandResult, error) {
-	list, err := cmd.ScrapperService.GetLinks(ctx, state.ChatId)
-	if err != nil {
-		slog.Error("Error getting links for chat", "id", state.ChatId, "error", err)
-		return service.NewCommandResult(true, "Не удалось получить ссылки"), nil
+func (cmd *ListCommand) Execute(ctx context.Context, state *state.State) (*CommandResult, error) {
+	var tag string
+	if len(state.UserArgs) > 0 {
+		tag = state.UserArgs[0]
 	}
-	slog.Debug("Got links for chat", "id", state.ChatId, "links", list)
+
+	list, err := cmd.ScrapperClient.GetLinks(ctx, state.ChatID, tag)
+	if err != nil {
+		slog.Error("Error getting links for chat", "id", state.ChatID, "error", err)
+		return NewCommandResult(true, "Не удалось получить ссылки"), nil
+	}
+
+	slog.Info("Got links for chat", "id", state.ChatID, "links", list)
 	var res strings.Builder
 	for _, link := range list.Links {
-		res.WriteString(link.Link + "\n")
+		res.WriteString(link.Link)
+		if len(link.Tags) > 0 {
+			res.WriteString(": ")
+		}
+		for _, linkTag := range link.Tags {
+			res.WriteString(linkTag + " ")
+		}
+		res.WriteString("\n")
 	}
 
 	if len(list.Links) == 0 || res.String() == "\n" {
-		return service.NewCommandResult(true, "Вы пока не отслеживаете ни одной ссылки"), nil
+		return NewCommandResult(true, "Вы пока не отслеживаете ни одной ссылки"), nil
 	}
-	return service.NewCommandResult(true, res.String()), nil
+	return NewCommandResult(true, res.String()), nil
 }

@@ -2,12 +2,17 @@ package commands
 
 import (
 	"context"
+	"fmt"
 
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/service"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/service/state"
 )
 
 type StartCommand struct {
-	ScrapperService *service.ScrapperService
+	ScrapperClient ScrapperClient
+}
+
+func NewStartCommand(scrapperClient ScrapperClient) *StartCommand {
+	return &StartCommand{scrapperClient}
 }
 
 func (cmd *StartCommand) Name() string {
@@ -18,10 +23,10 @@ func (cmd *StartCommand) Description() string {
 	return "Start working with bot"
 }
 
-func (cmd *StartCommand) Execute(ctx context.Context, state *service.State) (*service.CommandResult, error) {
-	err := cmd.ScrapperService.RegisterChat(ctx, state.ChatId)
+func (cmd *StartCommand) Execute(ctx context.Context, state *state.State) (*CommandResult, error) {
+	err := cmd.ScrapperClient.RegisterChat(ctx, state.ChatID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("registering chat in scrapper: %w", err)
 	}
-	return service.NewCommandResult(true, "Добро пожаловать, путник. Введите /help для просмотра доступных команд."), nil
+	return NewCommandResult(true, "Добро пожаловать, путник. Введите /help для просмотра доступных команд."), nil
 }

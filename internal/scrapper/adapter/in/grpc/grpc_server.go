@@ -1,3 +1,4 @@
+//nolint:mnd // shutdown timeout is intentionally kept inline for transport setup
 package grpc
 
 import (
@@ -7,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/mapper"
@@ -22,27 +24,38 @@ import (
 type ScrapperServer struct {
 	pb.UnimplementedScrapperServiceServer
 	chatService *service.ChatService
+	rateLimitMW Limiter
+	port        string
+	gatewayPort string
 }
 
-func NewScrapperServer(chatService *service.ChatService) *ScrapperServer {
-	return &ScrapperServer{chatService: chatService}
+type Limiter interface {
+	Limit(next http.Handler) http.Handler
+}
+
+func NewScrapperServer(chatService *service.ChatService, rateLimit Limiter, port, gatewayPort string) *ScrapperServer {
+	return &ScrapperServer{
+		chatService: chatService,
+		rateLimitMW: rateLimit,
+		port:        port,
+		gatewayPort: gatewayPort,
+	}
 }
 
 func (s *ScrapperServer) RegisterChat(ctx context.Context, chatID *pb.ChatID) (*pb.ChatResponse, error) {
 	if chatID == nil || chatID.Id == 0 {
-		return nil, status.Error(
+		return nil, fmt.Errorf("invalid register chat request: %w", status.Error(
 			codes.InvalidArgument,
 			"invalid register chat request",
-		)
+		))
 	}
 	_, err := s.chatService.RegisterChat(ctx, chatID.Id)
 	if err != nil {
-		//code := parseServerCode(err)
-		//		message := "Error saving chat"
-		//		errResp := dto.NewServiceError(message, err, code)
-		//		c.IndentedJSON(http.StatusInternalServerError, errResp)
+		// code := parseServerCode(err)
+		// message := "Error saving chat"
+		// errResp := dto.NewServiceError(message, err, code)
+		// c.IndentedJSON(http.StatusInternalServerError, errResp)
 		code := parseServerCode(err)
-		slog.Error("failed to register chat: %v", err)
 		return nil, status.Errorf(code, "failed to register chat: %v", err)
 	}
 	return &pb.ChatResponse{Message: "Chat registered"}, nil
@@ -52,17 +65,15 @@ func (s *ScrapperServer) DeleteChat(ctx context.Context, chatID *pb.ChatID) (*pb
 	err := s.chatService.DeleteChat(ctx, chatID.Id)
 	if err != nil {
 		code := parseServerCode(err)
-		slog.Error("failed to delete chat: %v", err)
 		return nil, status.Errorf(code, "failed to delete chat: %v", err)
 	}
 	return &pb.ChatResponse{Message: "Chat successfully deleted"}, nil
 }
 
-func (s *ScrapperServer) GetLinksByChatID(ctx context.Context, chatID *pb.ChatID) (*pb.ListLinkResponse, error) {
-	links, err := s.chatService.GetLinksByChatId(ctx, chatID.Id)
+func (s *ScrapperServer) GetLinksByChatID(ctx context.Context, req *pb.GetLinksReq) (*pb.ListLinkResponse, error) {
+	links, err := s.chatService.GetLinksByChatIDAndTag(ctx, req.Id, req.Tag)
 	if err != nil {
 		code := parseServerCode(err)
-		slog.Error("failed to get links: %v", err)
 		return nil, status.Errorf(code, "failed to get links: %v", err)
 	}
 	var linksResp pb.ListLinkResponse
@@ -71,7 +82,7 @@ func (s *ScrapperServer) GetLinksByChatID(ctx context.Context, chatID *pb.ChatID
 	for _, link := range links {
 		linksResp.Links = append(linksResp.Links, mapper.ToProtoLinkResponse(&link))
 	}
-	slog.Info("pb links list", "links", linksResp.Links)
+	linksResp.Size = int32(len(linksResp.Links))
 	return &linksResp, nil
 }
 
@@ -80,7 +91,7 @@ func (s *ScrapperServer) AddLink(ctx context.Context, req *pb.AddLinkRequest) (*
 	link, err := s.chatService.AddLink(ctx, req.ChatID, request)
 	if err != nil {
 		code := parseServerCode(err)
-		slog.Error(code.String(), "failed to add link: %v", err)
+		slog.Error("add link failed", "error", err, "code", code)
 		return nil, status.Errorf(code, "failed to add link: %v", err)
 	}
 	resp := mapper.ToProtoLinkResponse(link)
@@ -88,7 +99,7 @@ func (s *ScrapperServer) AddLink(ctx context.Context, req *pb.AddLinkRequest) (*
 }
 
 func (s *ScrapperServer) DeleteLink(ctx context.Context, req *pb.RemoveLinkRequest) (*pb.LinkResponse, error) {
-	link, err := s.chatService.DeleteLink(ctx, req.ChatID, mapper.ToDomainRemoveLinkRequest(req))
+	link, err := s.chatService.Unsubscribe(ctx, req.ChatID, mapper.ToDomainRemoveLinkRequest(req))
 	if err != nil {
 		code := parseServerCode(err)
 		slog.Error("delete link failed", "error", err, "code", code)
@@ -98,57 +109,73 @@ func (s *ScrapperServer) DeleteLink(ctx context.Context, req *pb.RemoveLinkReque
 	return resp, nil
 }
 
-func (s *ScrapperServer) RunServer(port string, gatewayPort string) error {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
-	if err != nil {
-		return fmt.Errorf("scrapper server error listening on port %s", port)
-	}
-
+func (s *ScrapperServer) RunServer(ctx context.Context) error {
 	grpcServer := grpc.NewServer()
 	pb.RegisterScrapperServiceServer(grpcServer, s)
 
+	lis, err := (&net.ListenConfig{}).Listen(ctx, "tcp", fmt.Sprintf(":%s", s.port))
+	if err != nil {
+		return fmt.Errorf("scrapper server error listening on port %s: %w", s.port, err)
+	}
 	go func() {
-		err = grpcServer.Serve(lis)
-
-		if err != nil {
-			slog.Error("scrapper server error serving on port", "port", port)
+		slog.Info("scrapper server listening on port", "port", s.port)
+		serveErr := grpcServer.Serve(lis)
+		if serveErr != nil {
+			slog.Error("scrapper server error serving on port", "port", s.port, "error", serveErr)
 		}
 	}()
 
-	err = runClient(port, gatewayPort)
+	gatewayServer, err := buildGatewayClient(s.port, s.gatewayPort, s.rateLimitMW)
 	if err != nil {
 		return err
 	}
+	go func() {
+		slog.Info("Serving gRPC-Gateway on", "port", s.gatewayPort)
+		serveErr := gatewayServer.ListenAndServe()
+		if serveErr != nil {
+			slog.Error("failed to serve gRPC-Gateway", "error", serveErr)
+		}
+	}()
+
+	<-ctx.Done()
+	slog.Info("Shutting down scrapper grpc server")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if shutdownErr := gatewayServer.Shutdown(shutdownCtx); shutdownErr != nil {
+		slog.Error("failed to shutdown gRPC-Gateway", "error", shutdownErr)
+	}
+	grpcServer.GracefulStop()
 	return nil
 }
 
-func runClient(serverPort string, gatewayPort string) error {
+func buildGatewayClient(serverPort string, gatewayPort string, rateLimitMW Limiter) (*http.Server, error) {
 	conn, err := grpc.NewClient(
 		":"+serverPort,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to dial server: %w", err)
+		return nil, fmt.Errorf("failed to dial server: %w", err)
 	}
 
 	mux := runtime.NewServeMux()
 
+	muxWithLimiter := rateLimitMW.Limit(mux)
+
 	err = pb.RegisterScrapperServiceHandler(context.Background(), mux, conn)
 	if err != nil {
-		return fmt.Errorf("failed to register gateway: %w", err)
+		if closeErr := conn.Close(); closeErr != nil {
+			slog.Error("failed to close scrapper grpc gateway connection", "error", closeErr)
+		}
+		return nil, fmt.Errorf("failed to register gateway: %w", err)
 	}
 
 	gwServer := &http.Server{
 		Addr:    ":" + gatewayPort,
-		Handler: mux,
+		Handler: muxWithLimiter,
 	}
-
-	slog.Info("Serving gRPC-Gateway on", "port", gatewayPort)
-	err = gwServer.ListenAndServe()
-	if err != nil {
-		return fmt.Errorf("failed to serve gRPC-Gateway: %w", err)
-	}
-	return nil
+	return gwServer, nil
 }
 
 func parseServerCode(err error) codes.Code {

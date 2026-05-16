@@ -1,0 +1,2 @@
+ALTER TABLE links
+ADD COLUMN formatted_link VARCHAR(500);

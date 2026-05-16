@@ -1,0 +1,82 @@
+---
+variables:
+  GO_VERSION: "1.25"
+  GO_LINTER_VERSION: "v2.10"
+  GOLANG_IMAGE: golang:${GO_VERSION}-alpine
+  GOPATH: "$CI_PROJECT_DIR/.go"
+  GITLAB_DOCKER_PROXY: gitlab.education.tbank.ru:443/backend-academy-go-2025/lecture-materials/dependency_proxy/containers
+
+cache:
+  paths:
+    - .go/pkg/mod/
+
+stages:
+  - lint
+  - test
+  - build
+
+lint:
+  stage: lint
+  image: golangci/golangci-lint:${GO_LINTER_VERSION}-alpine
+  script:
+    - golangci-lint run -c .golangci.yml --timeout=10m
+  rules:
+    - when: always
+  before_script:
+    - apk add --no-cache gcc musl-dev pkgconf
+test:
+  stage: test
+  image: ${GOLANG_IMAGE}
+  before_script:
+    - apk add --no-cache gcc musl-dev pkgconf
+  script:
+    - go test -tags musl -race -coverprofile=coverage.out $(go list ./internal/... | grep -v '/test$')
+    - go tool cover -func=coverage.out
+  coverage: '/total:\s+\(statements\)\s+(\d+.\d+)%/'
+  rules:
+    - when: always
+  cache: []
+integration_test:
+  image: golang:1.25-alpine
+  stage: test
+  timeout: 20m
+  variables:
+    GOMODCACHE: "$CI_PROJECT_DIR/.go-mod-cache-v2"
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  cache:
+    paths:
+      - .go-mod-cache-v2/
+  tags:
+    - dind
+  services:
+    - name: docker:dind
+      alias: docker
+      command: ["--tls=false"]
+  before_script:
+    - apk add --no-cache gcc musl-dev pkgconf docker-cli
+    - until docker info > /dev/null 2>&1; do echo "Waiting for docker..."; sleep 2; done
+    - until wget -q --spider https://proxy.golang.org 2>/dev/null; do echo "Waiting for network..."; sleep 2; done
+    - go mod download
+    - for i in 1 2 3 4 5; do echo "$CI_JOB_TOKEN" | docker login gitlab.education.tbank.ru:443 -u gitlab-ci-token --password-stdin && break || echo "Login attempt $i failed..." && sleep 5; done
+  script:
+    - go test -v -tags musl ./tests/...
+  rules:
+    - when: always
+
+build:
+  stage: build
+  image: ${GOLANG_IMAGE}
+  before_script:
+    - apk add --no-cache gcc musl-dev pkgconf
+  script:
+    - mkdir -p bin
+    - for d in cmd/*; do
+      name="$(basename "$d")";
+      echo "Building $name";
+      go build -tags musl -o "bin/$name" "./cmd/$name";
+      done
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: "$CI_COMMIT_BRANCH =~ /^(master|main)$/"
+    - when: never

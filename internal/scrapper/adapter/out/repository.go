@@ -11,8 +11,9 @@ import (
 // чтобы оно работало и для in-memory и для реальной бд
 type ChatRepository interface {
 	SaveChat(ctx context.Context, chat *model.Chat) error
+	GetChatByID(ctx context.Context, chatID int64) (*model.Chat, error)
 	GetChats(ctx context.Context) ([]model.Chat, error)
-	DeleteChat(ctx context.Context, chatId int64) (*model.Chat, error)
+	DeleteChat(ctx context.Context, chatID int64) (*model.Chat, error)
 }
 
 type LinkRepository interface {
@@ -26,23 +27,42 @@ type LinkRepository interface {
 }
 
 type ChatLinkRepository interface {
-	GetLinksByChatID(ctx context.Context, chatId int64) ([]model.Link, error)
-	Subscribe(ctx context.Context, chatId int64, linkId int64) error
-	Unsubscribe(ctx context.Context, chatId int64, linkId int64) error
+	GetLinksByChatID(ctx context.Context, chatID int64) ([]model.Link, error)
+	Subscribe(ctx context.Context, chatID int64, linkID int64) error
+	Unsubscribe(ctx context.Context, chatID int64, linkID int64) error
 	GetChatsByLinkID(ctx context.Context, linkID int64) ([]model.Chat, error)
-	GetChatIdsByLinkID(ctx context.Context, linkId int64) ([]int64, error)
+	GetChatIDsByLinkID(ctx context.Context, linkID int64) ([]int64, error)
+	GetLinksByChatIDAndTag(ctx context.Context, chatID int64, tag string) ([]model.Link, error)
 }
 
 type TagRepository interface {
 	SaveTag(ctx context.Context, tag *model.Tag) (*model.Tag, error)
 	GetTags(ctx context.Context) ([]model.Tag, error)
-	DeleteTag(ctx context.Context, tagId int64) (*model.Tag, error)
-	UpdateTag(ctx context.Context, tagId int64, tag *model.Tag) (*model.Tag, error)
+	DeleteTag(ctx context.Context, tagID int64) (*model.Tag, error)
+	UpdateTag(ctx context.Context, tagID int64, tag *model.Tag) (*model.Tag, error)
 	DeleteTagByName(ctx context.Context, tagName string) (*model.Tag, error)
 }
 
 type LinkTagRepository interface {
-	GetLinksByTagID(ctx context.Context, tagId int64) ([]model.Link, error)
-	Save(ctx context.Context, linkId int64, tagId int64) error
-	Delete(ctx context.Context, linkId int64, tagId int64) error
+	GetLinksByTagID(ctx context.Context, tagID int64) ([]model.Link, error)
+	GetTagsByLinkID(ctx context.Context, linkID int64) ([]model.Tag, error)
+	Save(ctx context.Context, linkID int64, tagID int64) error
+	Delete(ctx context.Context, linkID int64, tagID int64) error
+	DeleteTagsByLinkID(ctx context.Context, linkID int64) error
+}
+
+type OutboxRepository interface {
+	Save(ctx context.Context, outbox *model.Outbox) (*model.Outbox, error)
+	GetPendingOutbox(ctx context.Context) ([]model.Outbox, error)
+	UpdateProcessedAt(ctx context.Context, id string, processedAt time.Time) (*model.Outbox, error)
+	Delete(ctx context.Context, outboxID string) error
+}
+
+type Repositories struct {
+	ChatRepo     ChatRepository
+	LinkRepo     LinkRepository
+	ChatLinkRepo ChatLinkRepository
+	TagRepo      TagRepository
+	LinkTagRepo  LinkTagRepository
+	OutboxRepo   OutboxRepository
 }

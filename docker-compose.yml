@@ -1,18 +1,333 @@
 services:
-  postgres:
+  bot_db:
     image: postgres:17-alpine
-    container_name: db
+    container_name: bot-db
     restart: always
     env_file:
-      - .env
-    environment:
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_NAME}
+      - .env.bot
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_bot:/var/lib/postgresql/data
+    networks:
+      - kafka-net
+  scrapper_db:
+    image: postgres:17-alpine
+    container_name: scrapper-db
+    restart: always
+    env_file:
+      - .env.scrapper
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_scrapper:/var/lib/postgresql/data
+    networks:
+      - kafka-net
+  bot:
+    build:
+      context: .
+      dockerfile: build/bot/Dockerfile
+    env_file:
+      - .env.bot
+    depends_on:
+      bot_db:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+      kafka3:
+        condition: service_healthy
+      kafka-create-topics:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    networks:
+      - kafka-net
 
+  scrapper:
+    build:
+      context: .
+      dockerfile: build/scrapper/Dockerfile
+    env_file:
+      - .env.scrapper
+    depends_on:
+      scrapper_db:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+      kafka3:
+        condition: service_healthy
+      valkey-node-0:
+        condition: service_healthy
+      valkey-node-1:
+        condition: service_healthy
+      valkey-node-2:
+        condition: service_healthy
+      kafka-create-topics:
+        condition: service_completed_successfully
+    ports:
+      - "8082:8082"
+    networks:
+      - kafka-net
+  agent:
+    build:
+      context: .
+      dockerfile: build/agent/Dockerfile
+    depends_on:
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+      kafka3:
+        condition: service_healthy
+      kafka-create-topics:
+        condition: service_completed_successfully
+    networks:
+      - kafka-net
+  schema-registry:
+    image: confluentinc/cp-schema-registry:8.2.0
+    hostname: schema-registry
+    container_name: schema-registry
+    ports:
+      - '8081:8081'
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "PLAINTEXT://kafka1:9092,PLAINTEXT://kafka2:9092,PLAINTEXT://kafka3:9092"
+    depends_on:
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+      kafka3:
+        condition: service_healthy
+    networks:
+      - kafka-net
+
+  kafka1:
+    image: confluentinc/cp-kafka:7.8.0
+    hostname: kafka1
+    container_name: kafka1
+    ports:
+      - "29091:29091"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_BROKER_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:9093,2@kafka2:9093,3@kafka3:9093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka1:9092,CONTROLLER://kafka1:9093,EXTERNAL://0.0.0.0:29091'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka1:9092,EXTERNAL://localhost:29091'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT, EXTERNAL:PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      CLUSTER_ID: 'EmptNWtoR4GGWx-BH6nGLQ'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 3000
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+    volumes:
+      - kafka1_data:/var/lib/kafka/data
+    networks:
+      - kafka-net
+    healthcheck:
+      test: [ "CMD-SHELL", "cub kafka-ready -b kafka1:9092 1 60" ]
+      interval: 10s
+      timeout: 70s
+      retries: 10
+      start_period: 30s
+
+  kafka2:
+    image: confluentinc/cp-kafka:7.8.0
+    hostname: kafka2
+    container_name: kafka2
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_BROKER_ID: 2
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:9093,2@kafka2:9093,3@kafka3:9093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka2:9092,CONTROLLER://kafka2:9093,EXTERNAL://0.0.0.0:29092'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka2:9092,EXTERNAL://localhost:29092'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      CLUSTER_ID: 'EmptNWtoR4GGWx-BH6nGLQ'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 3000
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+    volumes:
+      - kafka2_data:/var/lib/kafka/data
+    networks:
+      - kafka-net
+    healthcheck:
+      test: [ "CMD-SHELL", "cub kafka-ready -b kafka2:9092 1 60" ]
+      interval: 10s
+      timeout: 70s
+      retries: 10
+      start_period: 30s
+
+  kafka3:
+    image: confluentinc/cp-kafka:7.8.0
+    hostname: kafka3
+    container_name: kafka3
+    ports:
+      - "29093:29093"
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_BROKER_ID: 3
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:9093,2@kafka2:9093,3@kafka3:9093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka3:9092,CONTROLLER://kafka3:9093,EXTERNAL://0.0.0.0:29093'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka3:9092,EXTERNAL://localhost:29093'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      CLUSTER_ID: 'EmptNWtoR4GGWx-BH6nGLQ'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 3000
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+    volumes:
+      - kafka3_data:/var/lib/kafka/data
+    networks:
+      - kafka-net
+    healthcheck:
+      test: [ "CMD-SHELL", "cub kafka-ready -b kafka3:9092 1 60" ]
+      interval: 10s
+      timeout: 70s
+      retries: 10
+      start_period: 30s
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-cluster-ui
+    ports:
+      - "8088:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:9092,kafka2:9092,kafka3:9092
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    networks:
+      - kafka-net
+  kafka-create-topics:
+    image: confluentinc/cp-kafka:7.8.0
+    env_file:
+      - .infra.env
+    hostname: kafka-create-topics
+    volumes:
+      - ./scripts:/scripts
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    networks:
+      - kafka-net
+    command: [ "bash", "/scripts/create_topics.sh" ]
+  valkey-node-0:
+    image: docker.io/bitnamilegacy/valkey-cluster:latest
+    volumes:
+      - valkey-cluster_data-0:/bitnami/valkey/data
+    environment:
+      - 'VALKEY_PASSWORD=bitnami'
+      - 'VALKEY_NODES=valkey-node-0 valkey-node-1 valkey-node-2'
+      - 'VALKEY_CLUSTER_ANNOUNCE_HOSTNAME=valkey-node-0'
+    networks:
+      - kafka-net
+    healthcheck:
+      test: [ "CMD-SHELL", "valkey-cli -a bitnami ping | grep PONG" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+  valkey-node-1:
+    image: docker.io/bitnamilegacy/valkey-cluster:latest
+    volumes:
+      - valkey-cluster_data-1:/bitnami/valkey/data
+    environment:
+      - 'VALKEY_PASSWORD=bitnami'
+      - 'VALKEY_NODES=valkey-node-0 valkey-node-1 valkey-node-2'
+      - 'VALKEY_CLUSTER_ANNOUNCE_HOSTNAME=valkey-node-1'
+    networks:
+      - kafka-net
+    healthcheck:
+      test: [ "CMD-SHELL", "valkey-cli -a bitnami ping | grep PONG" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+  valkey-node-2:
+    image: docker.io/bitnamilegacy/valkey-cluster:latest
+    volumes:
+      - valkey-cluster_data-2:/bitnami/valkey/data
+    environment:
+      - 'VALKEY_PASSWORD=bitnami'
+      - 'VALKEY_NODES=valkey-node-0 valkey-node-1 valkey-node-2'
+      - 'VALKEY_CLUSTER_ANNOUNCE_HOSTNAME=valkey-node-2'
+      - 'REDISCLI_AUTH=bitnami'
+      - 'VALKEY_CLUSTER_CREATOR=yes'
+    networks:
+      - kafka-net
+    healthcheck:
+      test: [ "CMD-SHELL", "valkey-cli -a bitnami cluster info | grep cluster_state:ok" ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+  tests:
+    image: golang:1.25-bookworm
+    working_dir: /app
+    volumes:
+      - .:/app
+      - gocache:/go/pkg/mod
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      TESTCONTAINERS_HOST_OVERRIDE: host.docker.internal
+      DOCKER_HOST: unix:///var/run/docker.sock
+    extra_hosts:
+        - "host.docker.internal:host-gateway"
+    env_file:
+      - .env.bot
+      - .env.scrapper
+
+    command: >
+      bash -c "
+        apt-get update &&
+        apt-get install -y gcc g++ libc6-dev pkg-config &&
+        go mod download &&
+        go test -v ./tests/...
+      "
 volumes:
-  postgres_data:
+  postgres_data_scrapper:
+  postgres_data_bot:
+  kafka1_data:
+  kafka2_data:
+  kafka3_data:
+  gocache:
+  valkey-cluster_data-0:
+    driver: local
+  valkey-cluster_data-1:
+    driver: local
+  valkey-cluster_data-2:
+    driver: local
+
+networks:
+  kafka-net:
+    driver: bridge

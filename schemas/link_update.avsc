@@ -1,0 +1,61 @@
+{
+  "type": "record",
+  "name": "LinkUpdate",
+  "namespace": "com.example.notification",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string",
+      "doc": "ID ссылки"
+    },
+    {
+      "name": "link",
+      "type": "string",
+      "doc": "Ссылка"
+    },
+    {
+      "name": "update",
+      "type": {
+        "name": "Update",
+        "type": "record",
+        "fields": [
+          {
+           "name":"title",
+           "type":"string"
+          },
+          {
+           "name":"author",
+           "type":"string"
+          },
+          {
+           "name":"timeCreated",
+            "type": {
+              "type": "long",
+              "logicalType": "timestamp-millis"
+            }
+          },
+          {
+           "name":"lastModified",
+            "type": {
+              "type": "long",
+              "logicalType": "timestamp-millis"
+            }
+          },
+          {
+           "name":"description",
+           "type":"string"
+          }
+        ]
+          },
+      "doc": "Описание изменений"
+    },
+    {
+      "name": "tgChatIds",
+      "type": {
+         "type": "array",
+         "items": "long"
+      },
+      "doc": "ИД чатов"
+    }
+  ]
+}

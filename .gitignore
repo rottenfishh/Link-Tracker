@@ -8,21 +8,27 @@
 *.so
 *.dylib
 bin
-
+bin/*
+.gocache
+.gomodcache
+.golangci-cache
 # Test binary, built with `go test -c`
 *.test
-
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 todo.txt
 # Dependency directories (remove the comment below to include it)
 # vendor/
 .idea
-
+/kafka/*
+/kafka1/*
 # Go workspace file
 go.work
 go.work.sum
-
 # env file
-*.env
-
+.env
+.env.bot
+.env.scrapper
+.env.agent
+*.txt
+*.json

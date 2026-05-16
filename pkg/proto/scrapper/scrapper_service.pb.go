@@ -66,6 +66,58 @@ func (x *ChatID) GetId() int64 {
 	return 0
 }
 
+type GetLinksReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Tag           string                 `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetLinksReq) Reset() {
+	*x = GetLinksReq{}
+	mi := &file_scrapper_service_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetLinksReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetLinksReq) ProtoMessage() {}
+
+func (x *GetLinksReq) ProtoReflect() protoreflect.Message {
+	mi := &file_scrapper_service_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetLinksReq.ProtoReflect.Descriptor instead.
+func (*GetLinksReq) Descriptor() ([]byte, []int) {
+	return file_scrapper_service_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetLinksReq) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *GetLinksReq) GetTag() string {
+	if x != nil {
+		return x.Tag
+	}
+	return ""
+}
+
 type ChatResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
@@ -75,7 +127,7 @@ type ChatResponse struct {
 
 func (x *ChatResponse) Reset() {
 	*x = ChatResponse{}
-	mi := &file_scrapper_service_proto_msgTypes[1]
+	mi := &file_scrapper_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -87,7 +139,7 @@ func (x *ChatResponse) String() string {
 func (*ChatResponse) ProtoMessage() {}
 
 func (x *ChatResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_scrapper_service_proto_msgTypes[1]
+	mi := &file_scrapper_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -100,7 +152,7 @@ func (x *ChatResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatResponse.ProtoReflect.Descriptor instead.
 func (*ChatResponse) Descriptor() ([]byte, []int) {
-	return file_scrapper_service_proto_rawDescGZIP(), []int{1}
+	return file_scrapper_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ChatResponse) GetMessage() string {
@@ -121,7 +173,7 @@ type LinkResponse struct {
 
 func (x *LinkResponse) Reset() {
 	*x = LinkResponse{}
-	mi := &file_scrapper_service_proto_msgTypes[2]
+	mi := &file_scrapper_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -133,7 +185,7 @@ func (x *LinkResponse) String() string {
 func (*LinkResponse) ProtoMessage() {}
 
 func (x *LinkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_scrapper_service_proto_msgTypes[2]
+	mi := &file_scrapper_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -146,7 +198,7 @@ func (x *LinkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkResponse.ProtoReflect.Descriptor instead.
 func (*LinkResponse) Descriptor() ([]byte, []int) {
-	return file_scrapper_service_proto_rawDescGZIP(), []int{2}
+	return file_scrapper_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *LinkResponse) GetId() int64 {
@@ -173,13 +225,14 @@ func (x *LinkResponse) GetTags() []string {
 type ListLinkResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Links         []*LinkResponse        `protobuf:"bytes,1,rep,name=links,proto3" json:"links,omitempty"`
+	Size          int32                  `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListLinkResponse) Reset() {
 	*x = ListLinkResponse{}
-	mi := &file_scrapper_service_proto_msgTypes[3]
+	mi := &file_scrapper_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -191,7 +244,7 @@ func (x *ListLinkResponse) String() string {
 func (*ListLinkResponse) ProtoMessage() {}
 
 func (x *ListLinkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_scrapper_service_proto_msgTypes[3]
+	mi := &file_scrapper_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -204,7 +257,7 @@ func (x *ListLinkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLinkResponse.ProtoReflect.Descriptor instead.
 func (*ListLinkResponse) Descriptor() ([]byte, []int) {
-	return file_scrapper_service_proto_rawDescGZIP(), []int{3}
+	return file_scrapper_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ListLinkResponse) GetLinks() []*LinkResponse {
@@ -212,6 +265,13 @@ func (x *ListLinkResponse) GetLinks() []*LinkResponse {
 		return x.Links
 	}
 	return nil
+}
+
+func (x *ListLinkResponse) GetSize() int32 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
 }
 
 type AddLinkRequest struct {
@@ -225,7 +285,7 @@ type AddLinkRequest struct {
 
 func (x *AddLinkRequest) Reset() {
 	*x = AddLinkRequest{}
-	mi := &file_scrapper_service_proto_msgTypes[4]
+	mi := &file_scrapper_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -237,7 +297,7 @@ func (x *AddLinkRequest) String() string {
 func (*AddLinkRequest) ProtoMessage() {}
 
 func (x *AddLinkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_scrapper_service_proto_msgTypes[4]
+	mi := &file_scrapper_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -250,7 +310,7 @@ func (x *AddLinkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddLinkRequest.ProtoReflect.Descriptor instead.
 func (*AddLinkRequest) Descriptor() ([]byte, []int) {
-	return file_scrapper_service_proto_rawDescGZIP(), []int{4}
+	return file_scrapper_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *AddLinkRequest) GetChatID() int64 {
@@ -284,7 +344,7 @@ type RemoveLinkRequest struct {
 
 func (x *RemoveLinkRequest) Reset() {
 	*x = RemoveLinkRequest{}
-	mi := &file_scrapper_service_proto_msgTypes[5]
+	mi := &file_scrapper_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -296,7 +356,7 @@ func (x *RemoveLinkRequest) String() string {
 func (*RemoveLinkRequest) ProtoMessage() {}
 
 func (x *RemoveLinkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_scrapper_service_proto_msgTypes[5]
+	mi := &file_scrapper_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -309,7 +369,7 @@ func (x *RemoveLinkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveLinkRequest.ProtoReflect.Descriptor instead.
 func (*RemoveLinkRequest) Descriptor() ([]byte, []int) {
-	return file_scrapper_service_proto_rawDescGZIP(), []int{5}
+	return file_scrapper_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *RemoveLinkRequest) GetChatID() int64 {
@@ -332,30 +392,34 @@ const file_scrapper_service_proto_rawDesc = "" +
 	"\n" +
 	"\x16scrapper_service.proto\x12\bscrapper\x1a\x1cgoogle/api/annotations.proto\"\x18\n" +
 	"\x06ChatID\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"(\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"/\n" +
+	"\vGetLinksReq\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
+	"\x03tag\x18\x02 \x01(\tR\x03tag\"(\n" +
 	"\fChatResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\"F\n" +
 	"\fLinkResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04link\x18\x02 \x01(\tR\x04link\x12\x12\n" +
-	"\x04tags\x18\x03 \x03(\tR\x04tags\"@\n" +
+	"\x04tags\x18\x03 \x03(\tR\x04tags\"T\n" +
 	"\x10ListLinkResponse\x12,\n" +
-	"\x05links\x18\x01 \x03(\v2\x16.scrapper.LinkResponseR\x05links\"P\n" +
+	"\x05links\x18\x01 \x03(\v2\x16.scrapper.LinkResponseR\x05links\x12\x12\n" +
+	"\x04size\x18\x02 \x01(\x05R\x04size\"P\n" +
 	"\x0eAddLinkRequest\x12\x16\n" +
 	"\x06chatID\x18\x01 \x01(\x03R\x06chatID\x12\x12\n" +
 	"\x04link\x18\x02 \x01(\tR\x04link\x12\x12\n" +
 	"\x04tags\x18\x03 \x03(\tR\x04tags\"?\n" +
 	"\x11RemoveLinkRequest\x12\x16\n" +
 	"\x06chatID\x18\x01 \x01(\x03R\x06chatID\x12\x12\n" +
-	"\x04link\x18\x02 \x01(\tR\x04link2\xbd\x03\n" +
+	"\x04link\x18\x02 \x01(\tR\x04link2\xc5\x03\n" +
 	"\x0fScrapperService\x12O\n" +
 	"\fRegisterChat\x12\x10.scrapper.ChatID\x1a\x16.scrapper.ChatResponse\"\x15\x82\xd3\xe4\x93\x02\x0f\"\r/tg-chat/{id}\x12M\n" +
 	"\n" +
-	"DeleteChat\x12\x10.scrapper.ChatID\x1a\x16.scrapper.ChatResponse\"\x15\x82\xd3\xe4\x93\x02\x0f*\r/tg-chat/{id}\x12U\n" +
-	"\x10GetLinksByChatID\x12\x10.scrapper.ChatID\x1a\x1a.scrapper.ListLinkResponse\"\x13\x82\xd3\xe4\x93\x02\r\x12\v/links/{id}\x12W\n" +
-	"\aAddLink\x12\x18.scrapper.AddLinkRequest\x1a\x16.scrapper.LinkResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/links/{chatID}\x12Z\n" +
+	"DeleteChat\x12\x10.scrapper.ChatID\x1a\x16.scrapper.ChatResponse\"\x15\x82\xd3\xe4\x93\x02\x0f*\r/tg-chat/{id}\x12Z\n" +
+	"\x10GetLinksByChatID\x12\x15.scrapper.GetLinksReq\x1a\x1a.scrapper.ListLinkResponse\"\x13\x82\xd3\xe4\x93\x02\r\x12\v/links/{id}\x12W\n" +
+	"\aAddLink\x12\x18.scrapper.AddLinkRequest\x1a\x16.scrapper.LinkResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/links/{chatID}\x12]\n" +
 	"\n" +
-	"DeleteLink\x12\x1b.scrapper.RemoveLinkRequest\x1a\x16.scrapper.LinkResponse\"\x17\x82\xd3\xe4\x93\x02\x11*\x0f/links/{chatID}B\x14Z\x12pkg/proto/scrapperb\x06proto3"
+	"DeleteLink\x12\x1b.scrapper.RemoveLinkRequest\x1a\x16.scrapper.LinkResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01**\x0f/links/{chatID}B\x14Z\x12pkg/proto/scrapperb\x06proto3"
 
 var (
 	file_scrapper_service_proto_rawDescOnce sync.Once
@@ -369,27 +433,28 @@ func file_scrapper_service_proto_rawDescGZIP() []byte {
 	return file_scrapper_service_proto_rawDescData
 }
 
-var file_scrapper_service_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_scrapper_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_scrapper_service_proto_goTypes = []any{
 	(*ChatID)(nil),            // 0: scrapper.ChatID
-	(*ChatResponse)(nil),      // 1: scrapper.ChatResponse
-	(*LinkResponse)(nil),      // 2: scrapper.LinkResponse
-	(*ListLinkResponse)(nil),  // 3: scrapper.ListLinkResponse
-	(*AddLinkRequest)(nil),    // 4: scrapper.AddLinkRequest
-	(*RemoveLinkRequest)(nil), // 5: scrapper.RemoveLinkRequest
+	(*GetLinksReq)(nil),       // 1: scrapper.GetLinksReq
+	(*ChatResponse)(nil),      // 2: scrapper.ChatResponse
+	(*LinkResponse)(nil),      // 3: scrapper.LinkResponse
+	(*ListLinkResponse)(nil),  // 4: scrapper.ListLinkResponse
+	(*AddLinkRequest)(nil),    // 5: scrapper.AddLinkRequest
+	(*RemoveLinkRequest)(nil), // 6: scrapper.RemoveLinkRequest
 }
 var file_scrapper_service_proto_depIdxs = []int32{
-	2, // 0: scrapper.ListLinkResponse.links:type_name -> scrapper.LinkResponse
+	3, // 0: scrapper.ListLinkResponse.links:type_name -> scrapper.LinkResponse
 	0, // 1: scrapper.ScrapperService.RegisterChat:input_type -> scrapper.ChatID
 	0, // 2: scrapper.ScrapperService.DeleteChat:input_type -> scrapper.ChatID
-	0, // 3: scrapper.ScrapperService.GetLinksByChatID:input_type -> scrapper.ChatID
-	4, // 4: scrapper.ScrapperService.AddLink:input_type -> scrapper.AddLinkRequest
-	5, // 5: scrapper.ScrapperService.DeleteLink:input_type -> scrapper.RemoveLinkRequest
-	1, // 6: scrapper.ScrapperService.RegisterChat:output_type -> scrapper.ChatResponse
-	1, // 7: scrapper.ScrapperService.DeleteChat:output_type -> scrapper.ChatResponse
-	3, // 8: scrapper.ScrapperService.GetLinksByChatID:output_type -> scrapper.ListLinkResponse
-	2, // 9: scrapper.ScrapperService.AddLink:output_type -> scrapper.LinkResponse
-	2, // 10: scrapper.ScrapperService.DeleteLink:output_type -> scrapper.LinkResponse
+	1, // 3: scrapper.ScrapperService.GetLinksByChatID:input_type -> scrapper.GetLinksReq
+	5, // 4: scrapper.ScrapperService.AddLink:input_type -> scrapper.AddLinkRequest
+	6, // 5: scrapper.ScrapperService.DeleteLink:input_type -> scrapper.RemoveLinkRequest
+	2, // 6: scrapper.ScrapperService.RegisterChat:output_type -> scrapper.ChatResponse
+	2, // 7: scrapper.ScrapperService.DeleteChat:output_type -> scrapper.ChatResponse
+	4, // 8: scrapper.ScrapperService.GetLinksByChatID:output_type -> scrapper.ListLinkResponse
+	3, // 9: scrapper.ScrapperService.AddLink:output_type -> scrapper.LinkResponse
+	3, // 10: scrapper.ScrapperService.DeleteLink:output_type -> scrapper.LinkResponse
 	6, // [6:11] is the sub-list for method output_type
 	1, // [1:6] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -408,7 +473,7 @@ func file_scrapper_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_scrapper_service_proto_rawDesc), len(file_scrapper_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

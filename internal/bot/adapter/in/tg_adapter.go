@@ -1,6 +1,8 @@
+//nolint:mnd // telegram long polling uses a small fixed buffer in this adapter
 package in
 
 import (
+	"fmt"
 	"log/slog"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -50,7 +52,7 @@ func (a *TgAdapter) SendMessage(chatID int64, message *model.Message) error {
 	msg := tgbotapi.NewMessage(chatID, message.Text)
 	_, err := a.Bot.Send(msg)
 	if err != nil {
-		return err
+		return fmt.Errorf("sending telegram message: %w", err)
 	}
 	return nil
 }

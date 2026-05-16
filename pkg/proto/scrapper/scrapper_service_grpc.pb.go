@@ -32,7 +32,7 @@ const (
 type ScrapperServiceClient interface {
 	RegisterChat(ctx context.Context, in *ChatID, opts ...grpc.CallOption) (*ChatResponse, error)
 	DeleteChat(ctx context.Context, in *ChatID, opts ...grpc.CallOption) (*ChatResponse, error)
-	GetLinksByChatID(ctx context.Context, in *ChatID, opts ...grpc.CallOption) (*ListLinkResponse, error)
+	GetLinksByChatID(ctx context.Context, in *GetLinksReq, opts ...grpc.CallOption) (*ListLinkResponse, error)
 	AddLink(ctx context.Context, in *AddLinkRequest, opts ...grpc.CallOption) (*LinkResponse, error)
 	DeleteLink(ctx context.Context, in *RemoveLinkRequest, opts ...grpc.CallOption) (*LinkResponse, error)
 }
@@ -65,7 +65,7 @@ func (c *scrapperServiceClient) DeleteChat(ctx context.Context, in *ChatID, opts
 	return out, nil
 }
 
-func (c *scrapperServiceClient) GetLinksByChatID(ctx context.Context, in *ChatID, opts ...grpc.CallOption) (*ListLinkResponse, error) {
+func (c *scrapperServiceClient) GetLinksByChatID(ctx context.Context, in *GetLinksReq, opts ...grpc.CallOption) (*ListLinkResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListLinkResponse)
 	err := c.cc.Invoke(ctx, ScrapperService_GetLinksByChatID_FullMethodName, in, out, cOpts...)
@@ -101,7 +101,7 @@ func (c *scrapperServiceClient) DeleteLink(ctx context.Context, in *RemoveLinkRe
 type ScrapperServiceServer interface {
 	RegisterChat(context.Context, *ChatID) (*ChatResponse, error)
 	DeleteChat(context.Context, *ChatID) (*ChatResponse, error)
-	GetLinksByChatID(context.Context, *ChatID) (*ListLinkResponse, error)
+	GetLinksByChatID(context.Context, *GetLinksReq) (*ListLinkResponse, error)
 	AddLink(context.Context, *AddLinkRequest) (*LinkResponse, error)
 	DeleteLink(context.Context, *RemoveLinkRequest) (*LinkResponse, error)
 	mustEmbedUnimplementedScrapperServiceServer()
@@ -120,7 +120,7 @@ func (UnimplementedScrapperServiceServer) RegisterChat(context.Context, *ChatID)
 func (UnimplementedScrapperServiceServer) DeleteChat(context.Context, *ChatID) (*ChatResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteChat not implemented")
 }
-func (UnimplementedScrapperServiceServer) GetLinksByChatID(context.Context, *ChatID) (*ListLinkResponse, error) {
+func (UnimplementedScrapperServiceServer) GetLinksByChatID(context.Context, *GetLinksReq) (*ListLinkResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetLinksByChatID not implemented")
 }
 func (UnimplementedScrapperServiceServer) AddLink(context.Context, *AddLinkRequest) (*LinkResponse, error) {
@@ -187,7 +187,7 @@ func _ScrapperService_DeleteChat_Handler(srv interface{}, ctx context.Context, d
 }
 
 func _ScrapperService_GetLinksByChatID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ChatID)
+	in := new(GetLinksReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -199,7 +199,7 @@ func _ScrapperService_GetLinksByChatID_Handler(srv interface{}, ctx context.Cont
 		FullMethod: ScrapperService_GetLinksByChatID_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ScrapperServiceServer).GetLinksByChatID(ctx, req.(*ChatID))
+		return srv.(ScrapperServiceServer).GetLinksByChatID(ctx, req.(*GetLinksReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }

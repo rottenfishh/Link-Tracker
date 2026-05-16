@@ -1,13 +1,16 @@
-package query_builder
+//nolint:wrapcheck // repository methods mostly proxy storage errors from the DB layer
+package querybuilder
 
 import (
 	"context"
 	"database/sql"
 	"errors"
+	"log/slog"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out/repository"
 )
 
 type TagRepository struct {
@@ -15,26 +18,28 @@ type TagRepository struct {
 	psql sq.StatementBuilderType
 }
 
-//TODO:
-//db, err := sql.Open("pgx", os.Getenv("DATABASE_URL"))
-//if err != nil {
-//panic("Unable to connect to database")
-//}
+// TODO:
+// db, err := sql.Open("pgx", os.Getenv("DATABASE_URL"))
+// if err != nil {
+// panic("Unable to connect to database")
+// }
 //
-//psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+// psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 func NewTagRepository(db *sql.DB, psql sq.StatementBuilderType) *TagRepository {
 	return &TagRepository{db: db, psql: psql}
 }
 
 func (r *TagRepository) SaveTag(ctx context.Context, tag *model.Tag) (*model.Tag, error) {
+	exec := repository.GetExecutor(ctx, r.db)
+
 	var savedTag model.Tag
 	err := r.psql.Insert("tags").
 		Columns("name").
 		Values(tag.Name).
-		Suffix("ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id, name").
-		RunWith(r.db).QueryRowContext(ctx).
-		Scan(&savedTag.Id, &savedTag.Name)
+		Suffix("ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING ID, name").
+		RunWith(exec).QueryRowContext(ctx).
+		Scan(&savedTag.ID, &savedTag.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -42,54 +47,60 @@ func (r *TagRepository) SaveTag(ctx context.Context, tag *model.Tag) (*model.Tag
 }
 
 func (r *TagRepository) GetTags(ctx context.Context) ([]model.Tag, error) {
-	rows, err := r.psql.Select("id", "name").From("tags").RunWith(r.db).QueryContext(ctx)
+	rows, err := r.psql.Select("ID", "name").From("tags").RunWith(r.db).QueryContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			slog.Error("closing query builder tags rows", "error", closeErr)
+		}
+	}()
 
 	var tags []model.Tag
 	for rows.Next() {
 		var tag model.Tag
-		if err := rows.Scan(&tag.Id, &tag.Name); err != nil {
-			return nil, err
+		if scanErr := rows.Scan(&tag.ID, &tag.Name); scanErr != nil {
+			return nil, scanErr
 		}
 		tags = append(tags, tag)
 	}
 
-	if err := rows.Err(); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+	if rowsErr := rows.Err(); rowsErr != nil {
+		if errors.Is(rowsErr, pgx.ErrNoRows) {
 			return nil, model.ErrNotFound
 		}
-		return nil, err
+		return nil, rowsErr
 	}
 
 	return tags, nil
 }
 
-func (r *TagRepository) DeleteTag(ctx context.Context, tagId int64) (*model.Tag, error) {
+func (r *TagRepository) DeleteTag(ctx context.Context, tagID int64) (*model.Tag, error) {
+	exec := repository.GetExecutor(ctx, r.db)
+
 	var tag model.Tag
 	err := r.psql.Delete("tags").
-		Where(sq.Eq{"id": tagId}).
-		Suffix("RETURNING id, name").
+		Where(sq.Eq{"ID": tagID}).
+		Suffix("RETURNING ID, name").
 		PlaceholderFormat(sq.Dollar).
-		RunWith(r.db).QueryRowContext(ctx).
-		Scan(&tag.Id, &tag.Name)
+		RunWith(exec).QueryRowContext(ctx).
+		Scan(&tag.ID, &tag.Name)
 	if err != nil {
 		return nil, err
 	}
 	return &tag, nil
 }
 
-func (r *TagRepository) UpdateTag(ctx context.Context, tagId int64, tag *model.Tag) (*model.Tag, error) {
+func (r *TagRepository) UpdateTag(ctx context.Context, tagID int64, tag *model.Tag) (*model.Tag, error) {
 	var updatedTag model.Tag
 	err := r.psql.Update("tags").
 		Set("name", tag.Name).
-		Where(sq.Eq{"id": tagId}).
-		Suffix("RETURNING id, name").
+		Where(sq.Eq{"ID": tagID}).
+		Suffix("RETURNING ID, name").
 		PlaceholderFormat(sq.Dollar).
 		RunWith(r.db).QueryRowContext(ctx).
-		Scan(&updatedTag.Id, &updatedTag.Name)
+		Scan(&updatedTag.ID, &updatedTag.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -100,10 +111,10 @@ func (r *TagRepository) DeleteTagByName(ctx context.Context, tagName string) (*m
 	var tag model.Tag
 	err := r.psql.Delete("tags").
 		Where(sq.Eq{"name": tagName}).
-		Suffix("RETURNING id, name").
+		Suffix("RETURNING ID, name").
 		PlaceholderFormat(sq.Dollar).
 		RunWith(r.db).QueryRowContext(ctx).
-		Scan(&tag.Id, &tag.Name)
+		Scan(&tag.ID, &tag.Name)
 	if err != nil {
 		return nil, err
 	}

@@ -1,17 +1,27 @@
 package model
 
+import "time"
+
 type LinkUpdate struct {
-	Id          int64   `json:"id"`
-	Link        string  `json:"link"`
-	Description string  `json:"description"`
-	TgChatIds   []int64 `json:"tgChatIDs"`
+	ID        string  `json:"id"`
+	Link      string  `json:"link"`
+	Update    Update  `json:"update"`
+	TgChatIDs []int64 `json:"tgChatIDs"`
 }
 
-func NewLinkUpdate(id int64, url string, description string, tgChatIds []int64) *LinkUpdate {
+type Update struct {
+	Title        string    `json:"title"`
+	Author       string    `json:"author"`
+	TimeCreated  time.Time `json:"timeCreated"`
+	LastModified time.Time `json:"lastModified"`
+	Description  string    `json:"description"`
+}
+
+func NewLinkUpdate(id string, url string, upd Update, tgChatIDs []int64) *LinkUpdate {
 	return &LinkUpdate{
-		Id:          id,
-		Link:        url,
-		Description: description,
-		TgChatIds:   tgChatIds,
+		ID:        id,
+		Link:      url,
+		Update:    upd,
+		TgChatIDs: tgChatIDs,
 	}
 }

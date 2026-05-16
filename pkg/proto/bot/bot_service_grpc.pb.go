@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	BotService_SendUpdate_FullMethodName = "/bot.BotService/SendUpdate"
+	BotService_SendReport_FullMethodName = "/bot.BotService/SendReport"
 )
 
 // BotServiceClient is the client API for BotService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BotServiceClient interface {
 	SendUpdate(ctx context.Context, in *LinkUpdate, opts ...grpc.CallOption) (*UpdateResponse, error)
+	SendReport(ctx context.Context, in *Report, opts ...grpc.CallOption) (*UpdateResponse, error)
 }
 
 type botServiceClient struct {
@@ -47,11 +49,22 @@ func (c *botServiceClient) SendUpdate(ctx context.Context, in *LinkUpdate, opts 
 	return out, nil
 }
 
+func (c *botServiceClient) SendReport(ctx context.Context, in *Report, opts ...grpc.CallOption) (*UpdateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateResponse)
+	err := c.cc.Invoke(ctx, BotService_SendReport_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BotServiceServer is the server API for BotService service.
 // All implementations must embed UnimplementedBotServiceServer
 // for forward compatibility.
 type BotServiceServer interface {
 	SendUpdate(context.Context, *LinkUpdate) (*UpdateResponse, error)
+	SendReport(context.Context, *Report) (*UpdateResponse, error)
 	mustEmbedUnimplementedBotServiceServer()
 }
 
@@ -64,6 +77,9 @@ type UnimplementedBotServiceServer struct{}
 
 func (UnimplementedBotServiceServer) SendUpdate(context.Context, *LinkUpdate) (*UpdateResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SendUpdate not implemented")
+}
+func (UnimplementedBotServiceServer) SendReport(context.Context, *Report) (*UpdateResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendReport not implemented")
 }
 func (UnimplementedBotServiceServer) mustEmbedUnimplementedBotServiceServer() {}
 func (UnimplementedBotServiceServer) testEmbeddedByValue()                    {}
@@ -104,6 +120,24 @@ func _BotService_SendUpdate_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BotService_SendReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Report)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).SendReport(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_SendReport_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).SendReport(ctx, req.(*Report))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BotService_ServiceDesc is the grpc.ServiceDesc for BotService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +148,10 @@ var BotService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendUpdate",
 			Handler:    _BotService_SendUpdate_Handler,
+		},
+		{
+			MethodName: "SendReport",
+			Handler:    _BotService_SendReport_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

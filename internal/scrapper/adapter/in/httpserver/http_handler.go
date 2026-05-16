@@ -1,0 +1,179 @@
+package httpserver
+
+import (
+	"errors"
+	"net/http"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/dto"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/pkg/model"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/service"
+)
+
+// TODO: create service layer
+// TODO: кидать свои собственные ошибки
+type Handler struct {
+	service *service.ChatService
+}
+
+func NewHandler(service *service.ChatService) *Handler {
+	return &Handler{service: service}
+}
+
+func (h *Handler) RegisterChat(c *gin.Context) {
+	id := c.Param("id")
+
+	idInt, err := parseID(id)
+	if err != nil {
+		errResp := dto.NewRequestParsingError(err)
+		c.JSON(http.StatusBadRequest, errResp)
+		return
+	}
+
+	chat, err := h.service.RegisterChat(c.Request.Context(), idInt)
+	if err != nil {
+		code := parseServerCode(err)
+		message := "Error saving chat"
+		errResp := dto.NewServiceError(message, err, code)
+		c.IndentedJSON(http.StatusInternalServerError, errResp)
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, *chat)
+}
+
+func (h *Handler) DeleteChat(c *gin.Context) {
+	id := c.Param("id")
+
+	idInt, err := parseID(id)
+	if err != nil {
+		errResp := dto.NewRequestParsingError(err)
+		c.JSON(http.StatusBadRequest, errResp)
+		return
+	}
+
+	err = h.service.DeleteChat(c.Request.Context(), idInt)
+	if err != nil {
+		code := parseServerCode(err)
+		message := "Error deleting chat"
+		errResp := dto.NewServiceError(message, err, code)
+		c.JSON(http.StatusInternalServerError, errResp)
+		return
+	}
+	c.IndentedJSON(http.StatusOK, gin.H{"id": id})
+}
+
+func (h *Handler) GetLinksByChatID(c *gin.Context) {
+	id := c.Param("id")
+
+	idInt, err := parseID(id)
+	if err != nil {
+		errResp := dto.NewRequestParsingError(err)
+		c.JSON(http.StatusBadRequest, errResp)
+		return
+	}
+	tag := c.Query("tag")
+
+	links, err := h.service.GetLinksByChatIDAndTag(c.Request.Context(), idInt, tag)
+	if err != nil {
+		code := parseServerCode(err)
+		message := "Error getting links"
+		errResp := dto.NewServiceError(message, err, code)
+		c.JSON(http.StatusInternalServerError, errResp)
+		return
+	}
+
+	linkResp := make([]dto.LinkResponse, 0)
+	for _, link := range links {
+		linkResp = append(linkResp, *dto.ToLinkResponse(link))
+	}
+
+	resp := dto.ListLinksResponse{Links: linkResp}
+	resp.Size = int32(len(linkResp))
+
+	c.IndentedJSON(http.StatusOK, resp)
+}
+
+func (h *Handler) AddLink(c *gin.Context) {
+	id := c.Param("id")
+
+	idInt, err := parseID(id)
+	if err != nil {
+		errResp := dto.NewRequestParsingError(err)
+		c.JSON(http.StatusBadRequest, errResp)
+		return
+	}
+	var link dto.AddLinkRequest
+	if bindErr := c.BindJSON(&link); bindErr != nil {
+		errResp := dto.NewRequestParsingError(bindErr)
+		c.JSON(http.StatusBadRequest, errResp)
+		return
+	}
+
+	addedLink, err := h.service.AddLink(c.Request.Context(), idInt, link)
+	if err != nil {
+		code := parseServerCode(err)
+		message := "Error tracking link"
+		errResp := dto.NewServiceError(message, err, code)
+		c.JSON(code, errResp)
+		return
+	}
+	linkResp := dto.ToLinkResponse(*addedLink)
+
+	c.IndentedJSON(http.StatusOK, linkResp)
+}
+
+func (h *Handler) DeleteLink(c *gin.Context) {
+	id := c.Param("id")
+
+	idInt, err := parseID(id)
+	if err != nil {
+		errResp := dto.NewRequestParsingError(err)
+		c.JSON(http.StatusBadRequest, errResp)
+		return
+	}
+
+	var link dto.DeleteLinkRequest
+	if bindErr := c.BindJSON(&link); bindErr != nil {
+		errResp := dto.NewRequestParsingError(bindErr)
+		c.JSON(http.StatusBadRequest, errResp)
+		return
+	}
+
+	deletedLink, err := h.service.Unsubscribe(c.Request.Context(), idInt, link)
+	if err != nil {
+		code := parseServerCode(err)
+		message := "Error deleting link"
+		errResp := dto.NewServiceError(message, err, code)
+		c.JSON(code, errResp)
+		return
+	}
+	c.IndentedJSON(http.StatusOK, deletedLink)
+}
+
+func parseID(id string) (int64, error) {
+	if id == "" {
+		return -1, errors.New("id is required")
+	}
+	idInt, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return 0, errors.New("invalid id format. should be number")
+	}
+	return idInt, nil
+}
+
+func parseServerCode(err error) int {
+	var code int
+	switch {
+	case errors.Is(err, model.ErrNotFound):
+		code = http.StatusNotFound
+	case errors.Is(err, model.ErrLinkAlreadyTracked):
+		code = http.StatusConflict
+	case errors.Is(err, model.ErrInvalidRequest):
+		code = http.StatusBadRequest
+	default:
+		code = http.StatusInternalServerError
+	}
+	return code
+}

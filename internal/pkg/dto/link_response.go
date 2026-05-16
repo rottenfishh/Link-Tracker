@@ -7,12 +7,12 @@ import (
 )
 
 type LinkResponse struct {
-	Id   string   `json:"id"`
+	ID   string   `json:"id"`
 	Link string   `json:"link"`
 	Tags []string `json:"tags"`
 }
 
 // TODO: get tags
 func ToLinkResponse(link model.Link) *LinkResponse {
-	return &LinkResponse{Id: strconv.FormatInt(link.Id, 10), Link: link.Link}
+	return &LinkResponse{ID: strconv.FormatInt(link.ID, 10), Link: link.Link, Tags: link.Tags}
 }

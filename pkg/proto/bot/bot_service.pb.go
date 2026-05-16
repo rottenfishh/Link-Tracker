@@ -10,6 +10,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -24,7 +25,7 @@ const (
 
 type ChatID struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ID            int64                  `protobuf:"varint,1,opt,name=Id,proto3" json:"Id,omitempty"`
+	ID            int64                  `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -68,9 +69,9 @@ func (x *ChatID) GetID() int64 {
 
 type LinkUpdate struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Link          string                 `protobuf:"bytes,2,opt,name=link,proto3" json:"link,omitempty"`
-	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Update        *Update                `protobuf:"bytes,3,opt,name=update,proto3" json:"update,omitempty"`
 	TgChatIDs     []int64                `protobuf:"varint,4,rep,packed,name=tgChatIDs,proto3" json:"tgChatIDs,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -106,11 +107,11 @@ func (*LinkUpdate) Descriptor() ([]byte, []int) {
 	return file_bot_service_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *LinkUpdate) GetId() int64 {
+func (x *LinkUpdate) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *LinkUpdate) GetLink() string {
@@ -120,11 +121,11 @@ func (x *LinkUpdate) GetLink() string {
 	return ""
 }
 
-func (x *LinkUpdate) GetDescription() string {
+func (x *LinkUpdate) GetUpdate() *Update {
 	if x != nil {
-		return x.Description
+		return x.Update
 	}
-	return ""
+	return nil
 }
 
 func (x *LinkUpdate) GetTgChatIDs() []int64 {
@@ -132,6 +133,210 @@ func (x *LinkUpdate) GetTgChatIDs() []int64 {
 		return x.TgChatIDs
 	}
 	return nil
+}
+
+type Update struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Author        string                 `protobuf:"bytes,2,opt,name=author,proto3" json:"author,omitempty"`
+	TimeCreated   *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=timeCreated,proto3" json:"timeCreated,omitempty"`
+	LastModified  *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=lastModified,proto3" json:"lastModified,omitempty"`
+	Description   string                 `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Update) Reset() {
+	*x = Update{}
+	mi := &file_bot_service_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Update) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Update) ProtoMessage() {}
+
+func (x *Update) ProtoReflect() protoreflect.Message {
+	mi := &file_bot_service_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Update.ProtoReflect.Descriptor instead.
+func (*Update) Descriptor() ([]byte, []int) {
+	return file_bot_service_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Update) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *Update) GetAuthor() string {
+	if x != nil {
+		return x.Author
+	}
+	return ""
+}
+
+func (x *Update) GetTimeCreated() *timestamppb.Timestamp {
+	if x != nil {
+		return x.TimeCreated
+	}
+	return nil
+}
+
+func (x *Update) GetLastModified() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastModified
+	}
+	return nil
+}
+
+func (x *Update) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+type Report struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ChatId        int64                  `protobuf:"varint,1,opt,name=chat_id,json=chatId,proto3" json:"chat_id,omitempty"`
+	Errors        []*LinkUpdateError     `protobuf:"bytes,2,rep,name=errors,proto3" json:"errors,omitempty"`
+	Id            string                 `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Report) Reset() {
+	*x = Report{}
+	mi := &file_bot_service_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Report) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Report) ProtoMessage() {}
+
+func (x *Report) ProtoReflect() protoreflect.Message {
+	mi := &file_bot_service_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Report.ProtoReflect.Descriptor instead.
+func (*Report) Descriptor() ([]byte, []int) {
+	return file_bot_service_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *Report) GetChatId() int64 {
+	if x != nil {
+		return x.ChatId
+	}
+	return 0
+}
+
+func (x *Report) GetErrors() []*LinkUpdateError {
+	if x != nil {
+		return x.Errors
+	}
+	return nil
+}
+
+func (x *Report) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type LinkUpdateError struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Link          string                 `protobuf:"bytes,1,opt,name=link,proto3" json:"link,omitempty"`
+	Err           string                 `protobuf:"bytes,2,opt,name=err,proto3" json:"err,omitempty"`
+	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	LinkId        int64                  `protobuf:"varint,4,opt,name=link_id,json=linkId,proto3" json:"link_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LinkUpdateError) Reset() {
+	*x = LinkUpdateError{}
+	mi := &file_bot_service_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LinkUpdateError) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LinkUpdateError) ProtoMessage() {}
+
+func (x *LinkUpdateError) ProtoReflect() protoreflect.Message {
+	mi := &file_bot_service_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LinkUpdateError.ProtoReflect.Descriptor instead.
+func (*LinkUpdateError) Descriptor() ([]byte, []int) {
+	return file_bot_service_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *LinkUpdateError) GetLink() string {
+	if x != nil {
+		return x.Link
+	}
+	return ""
+}
+
+func (x *LinkUpdateError) GetErr() string {
+	if x != nil {
+		return x.Err
+	}
+	return ""
+}
+
+func (x *LinkUpdateError) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *LinkUpdateError) GetLinkId() int64 {
+	if x != nil {
+		return x.LinkId
+	}
+	return 0
 }
 
 type UpdateResponse struct {
@@ -143,7 +348,7 @@ type UpdateResponse struct {
 
 func (x *UpdateResponse) Reset() {
 	*x = UpdateResponse{}
-	mi := &file_bot_service_proto_msgTypes[2]
+	mi := &file_bot_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -155,7 +360,7 @@ func (x *UpdateResponse) String() string {
 func (*UpdateResponse) ProtoMessage() {}
 
 func (x *UpdateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_bot_service_proto_msgTypes[2]
+	mi := &file_bot_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -168,7 +373,7 @@ func (x *UpdateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateResponse.ProtoReflect.Descriptor instead.
 func (*UpdateResponse) Descriptor() ([]byte, []int) {
-	return file_bot_service_proto_rawDescGZIP(), []int{2}
+	return file_bot_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *UpdateResponse) GetMessage() string {
@@ -182,21 +387,38 @@ var File_bot_service_proto protoreflect.FileDescriptor
 
 const file_bot_service_proto_rawDesc = "" +
 	"\n" +
-	"\x11bot_service.proto\x12\x03bot\x1a\x1cgoogle/api/annotations.proto\"\x18\n" +
+	"\x11bot_service.proto\x12\x03bot\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x18\n" +
 	"\x06ChatID\x12\x0e\n" +
-	"\x02ID\x18\x01 \x01(\x03R\x02ID\"p\n" +
+	"\x02ID\x18\x01 \x01(\x03R\x02ID\"s\n" +
 	"\n" +
 	"LinkUpdate\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
-	"\x04link\x18\x02 \x01(\tR\x04link\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1c\n" +
-	"\ttgChatIDs\x18\x04 \x03(\x03R\ttgChatIDs\"*\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04link\x18\x02 \x01(\tR\x04link\x12#\n" +
+	"\x06update\x18\x03 \x01(\v2\v.bot.UpdateR\x06update\x12\x1c\n" +
+	"\ttgChatIDs\x18\x04 \x03(\x03R\ttgChatIDs\"\xd6\x01\n" +
+	"\x06Update\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12\x16\n" +
+	"\x06author\x18\x02 \x01(\tR\x06author\x12<\n" +
+	"\vtimeCreated\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\vtimeCreated\x12>\n" +
+	"\flastModified\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\flastModified\x12 \n" +
+	"\vdescription\x18\x05 \x01(\tR\vdescription\"_\n" +
+	"\x06Report\x12\x17\n" +
+	"\achat_id\x18\x01 \x01(\x03R\x06chatId\x12,\n" +
+	"\x06errors\x18\x02 \x03(\v2\x14.bot.LinkUpdateErrorR\x06errors\x12\x0e\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\"j\n" +
+	"\x0fLinkUpdateError\x12\x12\n" +
+	"\x04link\x18\x01 \x01(\tR\x04link\x12\x10\n" +
+	"\x03err\x18\x02 \x01(\tR\x03err\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\x12\x17\n" +
+	"\alink_id\x18\x04 \x01(\x03R\x06linkId\"*\n" +
 	"\x0eUpdateResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage2U\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage2\x9a\x01\n" +
 	"\n" +
 	"BotService\x12G\n" +
 	"\n" +
-	"SendUpdate\x12\x0f.bot.LinkUpdate\x1a\x13.bot.UpdateResponse\"\x13\x82\xd3\xe4\x93\x02\r:\x01*\"\b/updatesB\x0fZ\rpkg/proto/botb\x06proto3"
+	"SendUpdate\x12\x0f.bot.LinkUpdate\x1a\x13.bot.UpdateResponse\"\x13\x82\xd3\xe4\x93\x02\r:\x01*\"\b/updates\x12C\n" +
+	"\n" +
+	"SendReport\x12\v.bot.Report\x1a\x13.bot.UpdateResponse\"\x13\x82\xd3\xe4\x93\x02\r:\x01*\"\b/reportsB\x0fZ\rpkg/proto/botb\x06proto3"
 
 var (
 	file_bot_service_proto_rawDescOnce sync.Once
@@ -210,20 +432,30 @@ func file_bot_service_proto_rawDescGZIP() []byte {
 	return file_bot_service_proto_rawDescData
 }
 
-var file_bot_service_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_bot_service_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_bot_service_proto_goTypes = []any{
-	(*ChatID)(nil),         // 0: bot.ChatID
-	(*LinkUpdate)(nil),     // 1: bot.LinkUpdate
-	(*UpdateResponse)(nil), // 2: bot.UpdateResponse
+	(*ChatID)(nil),                // 0: bot.ChatID
+	(*LinkUpdate)(nil),            // 1: bot.LinkUpdate
+	(*Update)(nil),                // 2: bot.Update
+	(*Report)(nil),                // 3: bot.Report
+	(*LinkUpdateError)(nil),       // 4: bot.LinkUpdateError
+	(*UpdateResponse)(nil),        // 5: bot.UpdateResponse
+	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
 }
 var file_bot_service_proto_depIdxs = []int32{
-	1, // 0: bot.BotService.SendUpdate:input_type -> bot.LinkUpdate
-	2, // 1: bot.BotService.SendUpdate:output_type -> bot.UpdateResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	2, // 0: bot.LinkUpdate.update:type_name -> bot.Update
+	6, // 1: bot.Update.timeCreated:type_name -> google.protobuf.Timestamp
+	6, // 2: bot.Update.lastModified:type_name -> google.protobuf.Timestamp
+	4, // 3: bot.Report.errors:type_name -> bot.LinkUpdateError
+	1, // 4: bot.BotService.SendUpdate:input_type -> bot.LinkUpdate
+	3, // 5: bot.BotService.SendReport:input_type -> bot.Report
+	5, // 6: bot.BotService.SendUpdate:output_type -> bot.UpdateResponse
+	5, // 7: bot.BotService.SendReport:output_type -> bot.UpdateResponse
+	6, // [6:8] is the sub-list for method output_type
+	4, // [4:6] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_bot_service_proto_init() }
@@ -237,7 +469,7 @@ func file_bot_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_bot_service_proto_rawDesc), len(file_bot_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -6,7 +6,7 @@ import (
 
 type InMemoryRepo struct {
 	Chats      map[int64]*model.Chat
-	nextLinkId int64
+	nextLinkID int64
 }
 
 func NewInMemoryRepo() *InMemoryRepo {
@@ -17,8 +17,8 @@ func (r *InMemoryRepo) SaveChat(chat *model.Chat) error {
 	return nil
 }
 
-func (r *InMemoryRepo) DeleteChat(chatId int64) error {
-	delete(r.Chats, chatId)
+func (r *InMemoryRepo) DeleteChat(chatID int64) error {
+	delete(r.Chats, chatID)
 	return nil
 }
 

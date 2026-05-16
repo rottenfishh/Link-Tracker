@@ -3,6 +3,7 @@ syntax = "proto3";
 package bot;
 
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "pkg/proto/bot";
 
@@ -14,6 +15,12 @@ service BotService {
       body: "*"
     };
   }
+  rpc SendReport(Report) returns (UpdateResponse) {
+    option(google.api.http) = {
+      post: "/reports"
+      body: "*"
+    };
+  }
 }
 
 message ChatID{
@@ -21,10 +28,31 @@ message ChatID{
 }
 
 message LinkUpdate{
-  int64 id = 1;
+  string id = 1;
   string link = 2;
-  string description = 3;
+  Update update = 3;
   repeated int64 tgChatIDs = 4;
+}
+
+message Update {
+  string title = 1;
+  string author = 2;
+  google.protobuf.Timestamp timeCreated = 3;
+  google.protobuf.Timestamp lastModified = 4;
+  string description = 5;
+}
+
+message Report {
+  int64 chat_id = 1;
+  repeated LinkUpdateError errors = 2;
+  string id =3;
+}
+
+message LinkUpdateError {
+  string link = 1;
+  string err = 2;
+  string message = 3;
+  int64 link_id = 4;
 }
 
 message UpdateResponse {

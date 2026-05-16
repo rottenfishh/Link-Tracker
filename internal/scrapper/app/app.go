@@ -6,92 +6,96 @@ import (
 	"fmt"
 	"log/slog"
 
-	sq "github.com/Masterminds/squirrel"
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib" // register pgx driver
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/in/grpc"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out/http"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out/repository/query_builder"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out/repository/sql"
+	http_in "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/in/httpserver"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/in/middleware"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out/cache"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/adapter/out/repository"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/service"
 )
 
 type App struct {
-	scheduler *service.Scheduler
-	//server     *http.Server
-	grpcServer *grpc.ScrapperServer
-	config     *ScrapperAppConfig
-	dbConfig   *DatabaseConfig
-	repos      Repositories
+	linkRuntime *LinkUpdatingRuntime
+	server      *http_in.Server
+	grpcServer  *grpc.ScrapperServer
 }
 
-type Repositories struct {
-	ChatRepo     out.ChatRepository
-	LinkRepo     out.LinkRepository
-	ChatLinkRepo out.ChatLinkRepository
-	TagRepo      out.TagRepository
-	LinkTagRepo  out.LinkTagRepository
+type LinkUpdatingRuntime struct {
+	scheduler     *service.Scheduler
+	outboxRelay   *service.OutboxRelay
+	linkProcessor *service.LinkProcessor
+	cfg           LinkTrackingConfig
 }
 
-func NewApp(config *ScrapperAppConfig) (*App, error) {
-	slog.Info(config.DatabaseConfig.DatabaseUrl, config.DatabaseConfig.AccessType)
+func BuildApp(ctx context.Context, config *ScrapperAppConfig) (*App, error) {
+	slog.Info("creating scrapper app", "database_url", config.DatabaseConfig.DatabaseName, "access_type", config.DatabaseConfig.AccessType)
 	pool, err := connectDB(context.Background(), config.DatabaseConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error while connecting to database %v", err)
+		return nil, fmt.Errorf("error while connecting to database: %w", err)
 	}
 
-	repos, err := buildRepos(config.DatabaseConfig.AccessType, pool)
+	repos, err := BuildRepos(config.DatabaseConfig.AccessType, pool)
 	if err != nil {
-		return nil, fmt.Errorf("error while building repos %v", err)
+		return nil, fmt.Errorf("error while building repos: %w", err)
 	}
 
-	chatService := service.NewChatService(repos.ChatRepo, repos.LinkRepo, repos.ChatLinkRepo, repos.TagRepo, repos.LinkTagRepo)
+	trackers := buildTrackers(config)
+	linkResolver := service.NewLinkResolver(trackers)
 
-	//httpRouter := http.NewServer(":"+config.Port, chatService)
-	grpcServer := grpc.NewScrapperServer(chatService)
-	scheduler, err := buildScheduler(*config, chatService)
+	txManager := repository.NewTransactionManager(pool)
+
+	linkCache, err := InitCache(config.CacheConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error while building scheduler %v", err)
+		slog.Error("error while initializing cache client", "error", err)
+		slog.Info("creating dummy no op cache client")
+		linkCache = &cache.NoOpCache{}
 	}
 
-	return &App{scheduler: scheduler, grpcServer: grpcServer, config: config}, nil
+	chatService := service.NewChatService(*repos, linkResolver, txManager, linkCache)
+
+	trackingService := service.NewLinkTrackingService(repos, txManager)
+
+	rateLimiter := middleware.NewRateLimiter(config.RateLimitConfig)
+	grpcServer := grpc.NewScrapperServer(chatService, rateLimiter, config.Port, config.GatewayPort)
+
+	linkRuntime, err := BuildLinkRuntime(ctx, *config, trackers, trackingService)
+	if err != nil {
+		return nil, fmt.Errorf("error while building scheduler: %w", err)
+	}
+
+	return &App{linkRuntime: linkRuntime, grpcServer: grpcServer}, nil
 }
 
-// TODO: add gateway port
-func (a *App) Run() error {
-	err := a.scheduler.StartScheduler()
+func NewApp(linkRuntime *LinkUpdatingRuntime, server *http_in.Server,
+	grpcServer *grpc.ScrapperServer) *App {
+	return &App{
+		linkRuntime: linkRuntime,
+		server:      server,
+		grpcServer:  grpcServer,
+	}
+}
+
+func (a *App) Run(ctx context.Context) error {
+	err := a.linkRuntime.Start(ctx)
 	if err != nil {
-		return fmt.Errorf("error starting scheduler %v", err)
+		return fmt.Errorf("error starting scheduler: %w", err)
 	}
 
-	slog.Info("Starting scrapper service at port " + a.config.Port)
-	err = a.grpcServer.RunServer("8089", a.config.Port)
+	err = a.grpcServer.RunServer(ctx)
 	if err != nil {
-		return fmt.Errorf("error starting router %v", err)
+		return fmt.Errorf("error starting router: %w", err)
 	}
+
 	return nil
 }
 
-func buildScheduler(config ScrapperAppConfig, chatService *service.ChatService) (*service.Scheduler, error) {
-	github := service.NewGithubClient(config.GithubToken)
-	stackOF := service.NewStackOverflowClient(config.StackOFToken)
-	notifier := http.NewBotHttpNotifier(config.BotUrl)
-
-	scheduler, err := service.NewScheduler(notifier, chatService)
-	if err != nil {
-		return nil, fmt.Errorf("error while building scheduler %v", err)
-	}
-	scheduler.RegisterUpdater("github", github)
-	scheduler.RegisterUpdater("stackof", stackOF)
-
-	return scheduler, nil
-}
-
 func connectDB(ctx context.Context, dbConfig DatabaseConfig) (*realsql.DB, error) {
+	_ = ctx
 	dsn := dbConfig.DSN()
 	conn, err := realsql.Open("pgx", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("unable to connect to database: %v\n", err)
+		return nil, fmt.Errorf("unable to connect to database: %w", err)
 	}
 
 	err = RunMigrations(dsn)
@@ -101,24 +105,22 @@ func connectDB(ctx context.Context, dbConfig DatabaseConfig) (*realsql.DB, error
 	return conn, nil
 }
 
-func buildRepos(accessType string, db *realsql.DB) (*Repositories, error) {
-	switch accessType {
-	case "sql":
-		chatRepo := sql.NewChatRepository(db)
-		linkRepo := sql.NewLinkRepository(db)
-		chatLinkRepo := sql.NewChatLinkRepository(db)
-		tagRepo := sql.NewTagRepository(db)
-		linkTagRepo := sql.NewLinkTagRepository(db)
-		return &Repositories{chatRepo, linkRepo, chatLinkRepo, tagRepo, linkTagRepo}, nil
-	case "query":
-		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-		chatRepo := query_builder.NewChatRepository(db, psql)
-		linkRepo := query_builder.NewLinkRepository(db, psql)
-		chatLinkRepo := query_builder.NewChatLinkRepository(db, psql)
-		tagRepo := query_builder.NewTagRepository(db, psql)
-		linkTagRepo := query_builder.NewLinkTagRepository(db, psql)
-		return &Repositories{chatRepo, linkRepo, chatLinkRepo, tagRepo, linkTagRepo}, nil
-	default:
-		return nil, fmt.Errorf("not supported type of repository: " + accessType)
+func (r *LinkUpdatingRuntime) Start(ctx context.Context) error {
+	err := r.scheduler.StartScheduler(ctx, r.cfg.SchedulerInterval)
+	if err != nil {
+		return fmt.Errorf("error while starting scheduler: %w", err)
 	}
+
+	for i := range r.cfg.NThreads {
+		slog.Info("Starting worker thread", "thread", i)
+		go r.linkProcessor.Start(ctx)
+	}
+	go func() {
+		err = r.outboxRelay.Run(ctx)
+	}()
+	if err != nil {
+		return fmt.Errorf("error while starting outboxRelay: %w", err)
+	}
+
+	return nil
 }

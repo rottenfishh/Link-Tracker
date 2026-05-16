@@ -1,0 +1,43 @@
+{
+  "type": "record",
+  "name": "Report",
+  "namespace": "com.example.notification",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string"
+    },
+    {
+      "name": "chat_id",
+      "type": "long"
+    },
+    {
+      "name": "errors",
+      "type": {
+        "type": "array",
+        "items": {
+          "name": "LinkUpdateError",
+          "type": "record",
+          "fields": [
+            {
+              "name": "link",
+              "type": "string"
+            },
+            {
+              "name": "err",
+              "type": "string"
+            },
+            {
+              "name": "message",
+              "type": "string"
+            },
+            {
+              "name": "link_id",
+              "type": "long"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
